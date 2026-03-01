@@ -39,7 +39,7 @@ Recognized journal names (case-insensitive):
 
 If no journal is specified, the review applies high general standards without a specific journal persona. The file path is also optional — the skill auto-detects the main `.tex` file if not provided.
 
-The consolidated report is saved to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the current directory.
+The consolidated report is saved to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the current directory. If you prefer a specific folder, edit "review-paper.md". 
 
 **Customization:**
 
@@ -59,10 +59,10 @@ The skill is designed to be extended in two ways.
 Copy [Paper-review/review-paper.md](Paper-review/review-paper.md) into your Claude Code skills directory:
 
 ```
-~/.claude/skills/review-paper.md
+~/.claude/commands/review-paper.md
 ```
 
-or into a project-level skills directory (`.claude/skills/review-paper.md` relative to the project root) if you prefer per-project installation.
+or into a project-level skills directory (`.claude/commands/review-paper.md` relative to the project root) if you prefer per-project installation.
 
 ## License
 
