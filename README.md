@@ -2,6 +2,15 @@
 
 A collection of [Claude Code](https://claude.ai/code) skills for academic research review. This tool was developed by [Claes Bäckman](https://claesbackman.com).
 
+
+## Skills in this folder
+
+- `Paper-review/review-paper.md`: Full referee-style paper review command.
+- `Paper-review/review-paper-light.md`: Fast 2-agent paper check.
+- `Paper-review/review-pap.md`: Pre-analysis plan review command.
+- `Paper-review/review-grant.md`: Grant proposal review command.
+
+
 ## Skills
 
 ### `review-paper` — Pre-Submission Referee Report
@@ -202,13 +211,6 @@ Saves a consolidated report to `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` in the cu
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
 - A proposal in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
-
-## Files
-
-- `Paper-review/review-paper.md`: Full referee-style paper review command.
-- `Paper-review/review-paper-light.md`: Fast 2-agent paper check.
-- `Paper-review/review-pap.md`: Pre-analysis plan review command.
-- `Paper-review/review-grant.md`: Grant proposal review command.
 
 ## License
 
