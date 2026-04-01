@@ -8,7 +8,8 @@ You are coordinating a rigorous pre-submission review of a grant proposal. You w
 
 Parse `$ARGUMENTS` as follows:
 - The recognized target programs/funders are:
-  - **US federal science and health**: `NSF`, `NIH`, `ERC`, `HorizonEurope`
+  - **US federal science and health**: `NSF`, `NIH`
+  - **International research funders**: `ERC`, `HorizonEurope`
   - **General proposal standards**: `major-funder`, `foundation`
   - (case-insensitive; users can add further programs or funders by editing this list in the skill file)
 - If the first token of `$ARGUMENTS` matches one of these names, treat it as the **target program/funder** and treat any remaining text as the **main proposal file path**.
@@ -21,7 +22,7 @@ If a file path was provided, use it as the main proposal file. Otherwise, auto-d
 
 1. Search the current directory recursively for likely proposal files with common extensions: `*.md`, `*.txt`, `*.tex`, `*.docx`, `*.pdf` (exclude hidden folders, `.git`, build output, and dependency directories).
 2. Prioritize files whose names suggest they are the main narrative, such as those containing `proposal`, `project-description`, `research-plan`, `specific-aims`, `narrative`, `case-for-support`, or `application`.
-3. Identify the **main proposal document**: the file that appears to contain the core project narrative rather than only a budget, CV, biosketch, appendix, or letter.
+3. Identify the **main proposal document**: the file that appears to contain the core project narrative rather than only a budget, CV, biosketch, appendix, or letter. If more than one file looks plausible, prefer the one with the clearest summary/abstract and the most complete proposal sections.
 4. Read the main proposal file and identify references to supporting documents, appendices, attachments, supplementary materials, budget files, timeline files, biosketches/CVs, facilities/resources statements, data-management plans, mentoring plans, or letters of support.
 5. Search recursively for common supporting files and record them if present:
    - Budget and justification: files containing `budget`, `justification`
@@ -274,6 +275,9 @@ You are a grants management reviewer assessing whether the proposal looks fundab
 
 ### Missing or Weak Supporting Documents
 [numbered list: Document | Why it seems needed | Suggested action]
+
+### Minor Resource or Coordination Issues
+[numbered list: same format as above]
 ```
 
 The proposal files to review are: [LIST ALL FILE PATHS HERE]
@@ -360,7 +364,9 @@ The proposal files to review are: [LIST ALL FILE PATHS HERE]
 
 ## Phase 3: Consolidate and Save
 
-After all 6 agents return their results, consolidate them into a single structured report. Save the report to:
+After all 6 agents return their results, consolidate them into a single structured report. Before saving, check whether `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
+
+Save the report to:
 
 `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md`
 
@@ -374,7 +380,7 @@ where `[YYYY-MM-DD]` is today's date.
 **Proposal**: [Title]
 **PI(s)/Team**: [PI(s) or team]
 **Date**: [Today's date]
-**Review Standard**: [TARGET_PROGRAM — if major-funder, write "Competitive Major Funder"; otherwise write the specific program/funder name]
+**Review Standard**: [TARGET_PROGRAM — if `major-funder`, write "Competitive Major Funder"; if `foundation`, write "Foundation"; otherwise write the specific program/funder name]
 
 ---
 
@@ -386,43 +392,6 @@ that must be resolved before submission.]
 **Preliminary Recommendation**: [Submit as-is | Revise before submitting | Substantial revision required | Do not submit in current form]
 
 ---
-
-## 1. Clarity, Writing Quality & Compliance Signals
-
-[Agent 1 output, preserving its structure]
-
----
-
-## 2. Internal Consistency, Scope & Deliverables
-
-[Agent 2 output]
-
----
-
-## 3. Significance, Innovation & Fit to the Call
-
-[Agent 3 output]
-
----
-
-## 4. Research Design, Methods & Feasibility
-
-[Agent 4 output]
-
----
-
-## 5. Budget, Timeline, Team & Management Plan
-
-[Agent 5 output]
-
----
-
-## 6. Adversarial Panel Review & Funding Recommendation
-
-[Agent 6 output]
-
----
-
 ## Priority Action Items
 
 The following issues require attention before submission, ordered by priority. When ranking across agents, apply this triage hierarchy: sponsor fit and competitive weakness (Agent 3, Agent 6) > methodological and feasibility risks (Agent 4) > internal inconsistencies and unsupported deliverables (Agent 2) > budget, timeline, and team gaps (Agent 5) > clarity and compliance signals (Agent 1). Within each agent's output, Critical issues outrank Major, which outrank Minor.
@@ -442,6 +411,45 @@ The following issues require attention before submission, ordered by priority. W
 8. ...
 9. ...
 10. ...
+
+---
+
+## Adversarial Panel Review & Funding Recommendation
+
+[Agent 6 output]
+
+---
+
+## Internal Consistency, Scope & Deliverables
+
+[Agent 2 output]
+
+---
+
+## Significance, Innovation & Fit to the Call
+
+[Agent 3 output]
+
+---
+
+## Research Design, Methods & Feasibility
+
+[Agent 4 output]
+
+---
+
+## Budget, Timeline, Team & Management Plan
+
+[Agent 5 output]
+
+---
+
+## Clarity, Writing Quality & Compliance Signals
+
+[Agent 1 output, preserving its structure]
+
+---
+
 ```
 
 After saving, report to the user:

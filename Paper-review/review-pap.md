@@ -15,6 +15,7 @@ Parse `$ARGUMENTS` as follows:
 - If the first token of `$ARGUMENTS` matches one of these names, treat it as the **registration target** and treat any remaining text as the **main PAP file path**.
 - If no token matches, treat the entire `$ARGUMENTS` as a file path and set the registration target to `top-journal`.
 - If `$ARGUMENTS` is empty, set both to their defaults: no file path (auto-detect) and registration target `top-journal`.
+- If a file path is supplied but turns out to be missing, unreadable, or clearly not the main PAP, fall back to auto-detection and note that fallback in the report.
 
 Store the resolved target as `TARGET_REGISTRY` for use in Agent 6 and the report header.
 
@@ -22,7 +23,7 @@ If a file path was provided, use it as the main PAP file. Otherwise, auto-detect
 
 1. Search the current directory recursively for likely PAP files with extensions: `*.md`, `*.txt`, `*.tex`, `*.docx`, `*.pdf` (exclude hidden folders, `.git`, build output, dependency directories).
 2. Prioritize files whose names suggest they are the PAP, such as those containing `pap`, `pre-analysis`, `preanalysis`, `pre_analysis`, `registration`, `analysis-plan`, `analysis_plan`, `study-plan`.
-3. Identify the **main PAP document**: the file that appears to contain the core analysis plan rather than only a protocol appendix, questionnaire, or cover sheet.
+3. Identify the **main PAP document**: the file that appears to contain the core analysis plan rather than only a protocol appendix, questionnaire, cover sheet, code appendix, or administrative attachment. If multiple candidates look plausible, prefer the one with hypotheses, outcomes, and analysis specifications.
 4. Read the main PAP file and identify references to supporting documents:
    - Power calculations or sample-size worksheets
    - Survey instruments, questionnaires, or interview guides
@@ -40,6 +41,7 @@ If a file path was provided, use it as the main PAP file. Otherwise, auto-detect
    - Full path of the main PAP file and each supporting file with its likely role
    - Study title, PI(s)/team, and abstract or research question if available
    - Named registration registry, trial ID, or journal if any
+   - Whether any expected supporting file categories were not found
 
 If the PAP is in a binary format such as `.pdf` or `.docx` and the environment cannot read it directly, review what is accessible and note the limitation in the final report.
 
@@ -84,6 +86,8 @@ You are a PAP editor reviewing the document for clarity, precision, and pre-spec
 
 6. **Overpromising**: Flag PAPs that commit to analyses unlikely to be feasible or that promise more statistical power than the sample section supports.
 
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line so the consolidation step can rank issues cleanly.
+
 **Output format:**
 ```
 ## Agent 1: Clarity, Writing Quality & Pre-specification Completeness
@@ -123,6 +127,8 @@ You are a technical reviewer checking whether the PAP is internally coherent: th
 7. **Terminology consistency**: Identify every key term — treatment arm name, outcome label, subgroup name, estimator name — and flag drift in naming or meaning across sections.
 
 8. **Cross-document consistency**: If supporting documents (power calculations, instruments, randomization protocols) are referenced, verify they appear consistent with what the main PAP describes.
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
 ```
@@ -169,6 +175,8 @@ You are a skeptical referee evaluating whether the proposed study can credibly a
    - **Underclaiming**: strong features of the design that are not clearly articulated
 
 7. **Fit to TARGET_REGISTRY expectations**: Based on the study design and named TARGET_REGISTRY, assess whether the PAP meets likely registration or journal standards for rigor, scope, and relevance. Flag design choices that are likely to receive critical scrutiny.
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
 ```
@@ -223,6 +231,8 @@ You are a demanding statistical reviewer assessing whether the proposed analysis
 6. **Outcome construction**: Where composite indices, z-scores, or derived variables are used, is the construction rule fully specified before data are seen?
 
 7. **Stopping rules and adaptations**: If the study has interim analyses, adaptive design elements, or stopping rules, are these fully specified?
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
 ```
@@ -282,6 +292,8 @@ You are a grants and implementation reviewer assessing whether the study is oper
    - randomization protocol
    - data management or sharing plan
    - mock tables or code shells
+
+Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
 ```
@@ -357,6 +369,8 @@ For each revision:
 
 Write 5-8 pointed questions that a skeptical referee or registry reviewer would ask the team. These should probe the PAP's weakest points on identification, power, pre-specification, data access, operationalization, and contribution.
 
+Tag every issue in Parts 2-6 with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
+
 **Output format:**
 ```
 ## Agent 6: Adversarial Referee Review & Registration Recommendation
@@ -386,7 +400,9 @@ The PAP files to review are: [LIST ALL FILE PATHS HERE]
 
 ## Phase 3: Consolidate and Save
 
-After all 6 agents return their results, consolidate them into a single structured report. Save the report to:
+After all 6 agents return their results, consolidate them into a single structured report. Before saving, check whether `PAP_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
+
+Save the report to:
 
 `PAP_REVIEW_[YYYY-MM-DD].md`
 
@@ -400,7 +416,13 @@ where `[YYYY-MM-DD]` is today's date.
 **Study**: [Title]
 **PI(s)/Team**: [PI(s) or team]
 **Date**: [Today's date]
-**Review Standard**: [TARGET_REGISTRY — if top-journal, write "Top Economics/Social Science Journal"; otherwise write the specific registry or venue name]
+**Review Standard**: [TARGET_REGISTRY — if `top-journal`, write "Top Economics/Social Science Journal"; if `working-paper`, write "Working Paper / General Pre-Registration Standard"; otherwise write the specific registry or venue name]
+
+---
+
+## File Inventory
+
+[Main PAP file path, supporting file paths with roles, and any missing expected supporting-file categories. If the PAP was binary or partially unreadable, note that here.]
 
 ---
 
@@ -411,43 +433,6 @@ that must be resolved before registration.]
 
 **Preliminary Recommendation**: [Register as-is | Revise before registering | Substantial revision required | Rethink design before registering]
 
----
-
-## 1. Clarity, Writing Quality & Pre-specification Completeness
-
-[Agent 1 output, preserving its structure]
-
----
-
-## 2. Internal Consistency, Hypotheses & Outcomes
-
-[Agent 2 output]
-
----
-
-## 3. Identification Strategy, Causal Claims & Contribution
-
-[Agent 3 output]
-
----
-
-## 4. Statistical Analysis Plan, Power & Multiple Testing
-
-[Agent 4 output]
-
----
-
-## 5. Data, Sample, Implementation & Operational Plan
-
-[Agent 5 output]
-
----
-
-## 6. Adversarial Referee Review & Registration Recommendation
-
-[Agent 6 output]
-
----
 
 ## Priority Action Items
 
@@ -468,6 +453,47 @@ The following issues require attention before registration, ordered by priority.
 8. ...
 9. ...
 10. ...
+
+---
+
+## Adversarial Referee Review & Registration Recommendation
+
+[Agent 6 output]
+
+
+
+---
+
+## Internal Consistency, Hypotheses & Outcomes
+
+[Agent 2 output]
+
+---
+
+## Identification Strategy, Causal Claims & Contribution
+
+[Agent 3 output]
+
+---
+
+## Statistical Analysis Plan, Power & Multiple Testing
+
+[Agent 4 output]
+
+---
+
+## Data, Sample, Implementation & Operational Plan
+
+[Agent 5 output]
+
+---
+
+## Clarity, Writing Quality & Pre-specification Completeness
+
+[Agent 1 output, preserving its structure]
+
+---
+
 ```
 
 After saving, report to the user:

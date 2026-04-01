@@ -1,11 +1,12 @@
 # Using AI to get feedback on your research
 
-A collection of [Claude Code](https://claude.ai/code) skills for academic economics paper review. This tool was developed by [Claes Bäckman](https://claesbackman.com). 
+A collection of [Claude Code](https://claude.ai/code) skills for academic research review. This tool was developed by [Claes Bäckman](https://claesbackman.com).
+
 ## Skills
 
 ### `review-paper` — Pre-Submission Referee Report
 
-Runs a rigorous pre-submission review of an academic paper, simulating the scrutiny of a specific journal's editorial board. Six specialized review agents run in parallel and their findings are consolidated into a single structured report.
+Runs a rigorous pre-submission review of an academic paper, simulating the scrutiny of a specific journal's editorial board. Six specialized review agents run in parallel and consolidate their findings into a single structured report.
 
 **What it reviews:**
 
@@ -18,17 +19,14 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 | 5 | Tables, figures, and their documentation |
 | 6 | Contribution evaluation (adversarial journal-specific referee) |
 
-
 **Installation:**
-
-Run this command in your terminal, then restart Claude Code:
 
 ```bash
 curl -o ~/.claude/commands/review-paper.md \
   https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
 ```
 
-This installs the skill globally. For a project-local install instead, use `.claude/commands/review-paper.md` relative to the project root:
+For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
@@ -37,15 +35,13 @@ mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
 
 **Usage:**
 
-From within the paper's directory, run:
-
-```
-/review-paper                        # auto-detect paper, generic standards
-/review-paper QJE                    # QJE-specific referee persona
-/review-paper JF path/to/main.tex    # Journal of Finance persona + explicit file path
+```text
+/review-paper
+/review-paper QJE
+/review-paper JF path/to/main.tex
 ```
 
-Recognized journal names (case-insensitive):
+**Supported journals:**
 
 | Category | Journals |
 |---|---|
@@ -53,26 +49,167 @@ Recognized journal names (case-insensitive):
 | Finance | `JF`, `JFE`, `RFS`, `JFQA` |
 | Macro | `AEJMacro`, `JME`, `RED` |
 
-If no journal is specified, the review applies high general standards without a specific journal persona. The file path is also optional — the skill auto-detects the main `.tex` file if not provided.
+If no journal is specified, the command applies high general standards without a specific journal persona. If no path is provided, it auto-detects the main `.tex` file.
 
-The consolidated report is saved to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the current directory. If you prefer a specific folder, edit "review-paper.md". 
+**Output:**
+
+Saves a consolidated report to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the current directory, automatically appending `-v2`, `-v3`, and so on if a file already exists.
 
 **Customization:**
 
-The skill is designed to be extended in two ways.
-
-*Adding journals or fields:* Open the skill file and add your journal's abbreviation to the recognized names list in Phase 1. Agent 6 will automatically adopt the appropriate editorial persona based on its training knowledge of that journal. The same approach works for other disciplines — sociology, political science, psychology — by specifying the target journal when invoking the skill.
-
-*Adding project-specific context:* You can ask Claude to inject context about your specific paper before running the skill. For example: "Before running /review-paper, note that this paper uses a regression discontinuity design and the main identification concern is sorting around the threshold." Claude will carry that context into the review. A more durable approach is to put project-specific instructions in a `CLAUDE.md` file in your project directory — Claude Code reads this automatically and the agents will have access to it when reviewing your paper.
-
-*Changing folder structure:* In the baseline specification of this tool, Claude will search through folders looking for tables and figures. You can simply put in your own file paths to make it slightly easier. If you prefer to get the feedback saved somewhere else, you can also change the path for where the final report is saved. 
+- Add journals or fields by editing the recognized journal names list in the skill file.
+- Add project-specific context in your prompt or in a local `CLAUDE.md` file.
+- Adjust folder discovery or save paths directly in the skill if your project structure differs from the default assumptions.
 
 **Requirements:**
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent (i.e., the Agent tool must be available).
-- The paper must be in LaTeX format. The skill reads `.tex` files and optionally inspects figure and table files.
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A LaTeX paper. The skill reads `.tex` files and optionally inspects figure and table files.
 
+### `review-paper-light` — Quick Paper Check
+
+Runs a fast 2-agent pre-submission check for an economics paper. It focuses on contribution, identification, causal overclaiming, and unsupported claims, and is designed for quick iteration before a full review.
+
+**Installation:**
+
+```bash
+curl -o ~/.claude/commands/review-paper-light.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/commands && curl -o .claude/commands/review-paper-light.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
+```
+
+**Usage:**
+
+```text
+/review-paper-light
+/review-paper-light path/to/main.tex
+```
+
+If no path is provided, the command auto-detects the main `.tex` file.
+
+**Output:**
+
+Saves a short prioritized report to `QUICK_REVIEW_[YYYY-MM-DD].md` in the current directory, automatically versioning the filename if one already exists.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A LaTeX paper.
+
+### `review-pap` — Pre-Analysis Plan Review
+
+Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The command auto-detects the main PAP and supporting files, then evaluates writing quality, specification completeness, internal consistency, identification strategy, statistical analysis, implementation details, and registry or journal fit.
+
+**Installation:**
+
+```bash
+curl -o ~/.claude/commands/review-pap.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/commands && curl -o .claude/commands/review-pap.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
+```
+
+**Usage:**
+
+```text
+/review-pap
+/review-pap AEA
+/review-pap QJE path/to/pap.tex
+```
+
+**Supported targets:**
+
+- Trial registries: `AEA`, `EGAP`, `OSF`, `ClinicalTrials`, `ISRCTN`
+- Journal standards: `AER`, `QJE`, `JPE`, `RESTUD`, `AEJ`, `JEEA`
+- General standards: `top-journal`, `working-paper`
+
+If no target is specified, the command defaults to `top-journal`. If no path is provided, it auto-detects the main PAP file.
+
+**Supporting files it can inspect:**
+
+- Power calculations and sample-size worksheets
+- Survey instruments and questionnaires
+- Randomization protocols and sampling frames
+- Code skeletons and mock tables
+- Data dictionaries and ethics materials
+
+**Output:**
+
+Saves a consolidated report to `PAP_REVIEW_[YYYY-MM-DD].md` in the current directory.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A PAP in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
+
+### `review-grant` — Grant Proposal Review
+
+Runs a 6-agent pre-submission panel review of a grant proposal. The command auto-detects the main proposal and supporting documents, then evaluates clarity, compliance signals, internal consistency, significance, innovation, research design, feasibility, budget logic, team readiness, and fit to the target funder or program.
+
+**Installation:**
+
+```bash
+curl -o ~/.claude/commands/review-grant.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
+```
+
+For a project-local install:
+
+```bash
+mkdir -p .claude/commands && curl -o .claude/commands/review-grant.md \
+  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
+```
+
+**Usage:**
+
+```text
+/review-grant
+/review-grant NSF
+/review-grant NIH path/to/proposal.pdf
+```
+
+**Supported funders/programs:**
+
+- US federal science and health: `NSF`, `NIH`, `ERC`, `HorizonEurope`
+- General proposal standards: `major-funder`, `foundation`
+
+If no target is specified, the command defaults to `major-funder`. If no path is provided, it auto-detects the main proposal file.
+
+**Supporting files it can inspect:**
+
+- Budgets and budget justifications
+- Timelines and workplans
+- Biosketches, CVs, and personnel documents
+- Data-management plans, mentoring plans, and facilities statements
+- Letters of support, appendices, and supplementary materials
+
+**Output:**
+
+Saves a consolidated report to `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` in the current directory.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A proposal in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
+
+## Files
+
+- `Paper-review/review-paper.md`: Full referee-style paper review command.
+- `Paper-review/review-paper-light.md`: Fast 2-agent paper check.
+- `Paper-review/review-pap.md`: Pre-analysis plan review command.
+- `Paper-review/review-grant.md`: Grant proposal review command.
 
 ## License
 
-MIT — free to use, adapt, and share. 
+MIT — free to use, adapt, and share.
