@@ -7,6 +7,7 @@ A collection of [Claude Code](https://claude.ai/code) skills for academic resear
 
 - `Skills/review-paper.md`: Full referee-style paper review command.
 - `Skills/review-paper-light.md`: Fast 2-agent paper check.
+- `Skills/review-paper-code.md`: Paper-code reproducibility and alignment review.
 - `Skills/review-pap.md`: Pre-analysis plan review command.
 - `Skills/review-grant.md`: Grant proposal review command.
 
@@ -110,6 +111,43 @@ Saves a short prioritized report to `QUICK_REVIEW_[YYYY-MM-DD].md` in the curren
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
 - A LaTeX paper.
+
+### `review-paper-code` — Paper-Code Reproducibility Review
+
+Runs a paper-code review for empirical research projects. It discovers the main LaTeX paper and analysis code, checks reproducibility and code quality, maps the paper's main empirical claims to the code, and writes a constructive report highlighting strengths, gaps to verify, and concrete next steps.
+
+**What it reviews:**
+
+| Area | Focus |
+|---|---|
+| Paper discovery | Main `.tex` file and included sections |
+| Code discovery | Stata, R, and Python scripts in common analysis folders |
+| Reproducibility | Paths, seeds, outputs, dependencies, run order, documentation |
+| Code quality | Structure, commented-out code, opaque transforms, major thresholds |
+| Paper-code alignment | Tables, variables, sample restrictions, methods, clustering, fixed effects |
+
+**Usage:**
+
+```text
+/review-paper-code
+/review-paper-code path/to/main.tex
+/review-paper-code path/to/main.tex path/to/code_dir
+/review-paper-code path/to/main.tex path/to/code_dir full
+```
+
+**Review depth:**
+
+- `main`: default; focuses on main scripts and core outputs
+- `full`: reviews all detected code files in scope
+
+**Output:**
+
+Writes a report to `code_review_report.md` in the current working directory.
+
+**Requirements:**
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
+- A LaTeX paper plus Stata, R, or Python analysis code.
 
 ### `review-pap` — Pre-Analysis Plan Review
 
