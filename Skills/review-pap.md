@@ -88,7 +88,7 @@ You are a PAP editor reviewing the document for clarity, precision, and pre-spec
 
 4. **Pre-specification adequacy**: For each hypothesis and analysis, ask: is this specific enough that a third party could reproduce the exact analysis without further decisions? Flag any element that would require judgment calls not resolved by the PAP:
    - outcome definitions that leave room for interpretation
-   - analysis specifications that omit functional form, controls, fixed effects, or standard error clustering
+   - analysis specifications that omit model structure, covariates or adjustment terms, or the uncertainty-estimation approach
    - subgroup criteria that are not operationally defined
    - ambiguous language such as "we will explore", "if appropriate", "as needed", or "we may"
 
@@ -96,7 +96,7 @@ You are a PAP editor reviewing the document for clarity, precision, and pre-spec
    - no primary outcome clearly designated
    - multiple testing problem not addressed
    - no pre-specified rule for handling attrition, non-compliance, or missing data
-   - no pre-specified decision rule for the main estimator
+   - no pre-specified decision rule for the primary analysis
    - heterogeneity analyses promised but not operationalized
    - deviations-from-plan policy absent or vague
 
@@ -137,7 +137,7 @@ You are a technical reviewer checking whether the PAP is internally coherent: th
 
 4. **Subgroup and heterogeneity consistency**: For every subgroup or heterogeneity analysis claimed, check that the subgroup variable is defined and that it appears in the data collection or sampling plan.
 
-5. **Analysis plan vs. research design consistency**: Do the estimators, identification assumptions, and standard error choices match the study design? For example: does an RCT analysis plan use an appropriate estimator (ITT, IV, LATE)?
+5. **Analysis plan vs. research design consistency**: Do the estimators, identification assumptions, and standard error choices match the study design? For example: does an RCT analysis plan specify an appropriate primary analysis (e.g., intention-to-treat or a clearly defined model for the primary outcome)?
 
 6. **Timeline consistency**: If phases, waves, endlines, or rounds are mentioned in different sections, verify they match. Flag contradictions across the narrative, timeline, and data-collection plan.
 
