@@ -2,15 +2,17 @@
 description: Run a 6-agent pre-submission referee report for an academic paper targeting a specified journal
 ---
 
-You are coordinating a rigorous pre-submission review of an academic economics paper. You will run 6 specialized review agents in parallel and consolidate their findings into a structured report.
+You are coordinating a rigorous pre-submission review of an academic paper in psychology or neuroscience. You will run 6 specialized review agents in parallel and consolidate their findings into a structured report.
 
 ## Phase 1: Parse Arguments and Discover the Paper
 
 Parse `$ARGUMENTS` as follows:
 - The recognized journal names are:
-  - **Top-5 economics**: `AER`, `QJE`, `JPE`, `Econometrica`, `REStud`
-  - **Finance**: `JF`, `JFE`, `RFS`, `JFQA`
-  - **Macro**: `AEJMacro`, `JME`, `RED`
+  - **Top-tier neuroscience**: `NatureNeuro`, `Neuron`, `eLife`, `CurrBiol`
+  - **Broad science / Nature family**: `NatureHB`, `PNAS`
+  - **Cognitive and behavioral**: `PsychSci`, `JNeurosci`
+  - **Neuroimaging**: `NeuroImage`, `CerebCortex`
+  - **Computational / open science**: `PLoSCB`, `PLoSOne`, `CommsPsych`
   - (case-insensitive; users can add further journals by editing this list in the skill file)
 - If the first token of `$ARGUMENTS` matches one of these names, treat it as the **target journal** and treat any remaining text as the **file path**.
 - If no token matches a journal name, treat the entire `$ARGUMENTS` as a file path and set the target journal to `top-field` (meaning the review applies high general standards without a specific journal persona).
@@ -18,7 +20,22 @@ Parse `$ARGUMENTS` as follows:
 
 Store the resolved target journal as `TARGET_JOURNAL` for use in Agent 6 and the report header.
 
-If a file path was provided, use it as the main LaTeX file. Otherwise, auto-detect:
+After parsing the journal name and file path, detect the paper format and set `INPUT_MODE` plus a cleanup flag `CREATED_REVIEW_INPUT = false`.
+
+If a file path was provided:
+
+1. Detect the extension: `.tex`, `.md`, `.pdf`, or `.docx`.
+2. If the extension is unrecognized, halt and tell the user: "Unsupported file format. Supported formats: .tex, .md, .pdf, .docx."
+
+If no file path was provided, auto-detect in this priority order:
+
+1. First, look for a `.tex` file containing `\documentclass` (current behavior).
+2. Then look for root-level `.md` files, preferring `main.md`, then `paper.md`, then the alphabetically first `.md` file in the root.
+3. Then look for a single `.pdf` in the root directory.
+4. Then look for a single `.docx` in the root directory.
+5. If nothing is found, halt and tell the user that you searched for: a `.tex` main document in the current directory tree (excluding `_minted-*` and build output folders), root-level `.md` files (preferring `main.md` or `paper.md`), a single root-level `.pdf`, and a single root-level `.docx`.
+
+If the resolved input is `.tex`, set `INPUT_MODE = "latex"` and keep the existing logic exactly:
 
 1. Use Glob with pattern `**/*.tex` to list all .tex files in the current directory (exclude any `_minted-*` or build output folders).
 2. Identify the **main document**: the .tex file that contains `\documentclass` or `\begin{document}`. Read each candidate briefly if needed.
@@ -38,25 +55,58 @@ If a file path was provided, use it as the main LaTeX file. Otherwise, auto-dete
    - Root-level: `*table*.tex`, `*Table*.tex`
    - Exclude: `**/_minted-*/**`, `**/build/**`, `**/output/**`, `**/.git/**`
 
+If the resolved input is `.md`, set `INPUT_MODE = "plain"` and:
+
+1. Read the Markdown file directly. No component resolution is needed.
+2. Write its contents unchanged to `_review_input.txt` so all plain-mode agent handoffs use a single content file.
+3. Set `CREATED_REVIEW_INPUT = true`.
+4. Skip the LaTeX-specific figure/table Glob patterns.
+5. Use Glob to list likely figure/image files from:
+   - `**/figures/**`
+   - `**/images/**`
+   - Root-level `*.png`, `*.pdf`, `*.jpg`, `*.svg`
+6. Record those image paths as figure paths.
+7. Set table paths to empty.
+
+If the resolved input is `.pdf`, set `INPUT_MODE = "plain"` and:
+
+1. Run: `pdftotext -layout "<path>" _review_input.txt`
+2. If `pdftotext` is not available, run: `python3 -c "import pypdf; r=pypdf.PdfReader('<path>'); open('_review_input.txt','w').write('\n'.join(p.extract_text() for p in r.pages))"`
+3. If both fail, halt and tell the user to install `pdftotext` (`poppler-utils`) or `pypdf`.
+4. After extraction, set `CREATED_REVIEW_INPUT = true`.
+5. Skip the LaTeX-specific figure/table Glob patterns.
+6. Use the same image Glob as the `.md` path and record those paths as figure paths.
+7. Set table paths to empty.
+
+If the resolved input is `.docx`, set `INPUT_MODE = "plain"` and:
+
+1. Run: `pandoc "<path>" -t plain -o _review_input.txt`
+2. If `pandoc` is not available, halt and tell the user to install pandoc.
+3. After extraction, set `CREATED_REVIEW_INPUT = true`.
+4. Skip the LaTeX-specific figure/table Glob patterns.
+5. Use the same image Glob as the `.md` path and record those paths as figure paths.
+6. Set table paths to empty.
+
 Record:
-- Full path of each .tex file and its role in the paper
+- If `INPUT_MODE = "latex"`: full path of each `.tex` file and its role in the paper
+- If `INPUT_MODE = "plain"`: the single content file path to review (`_review_input.txt`)
 - List of figure file paths
 - List of table file paths
-- The paper title, authors, and abstract (from the main .tex file)
+- The paper title, authors, and abstract (from the main `.tex` file for LaTeX inputs, or best-effort from the plain/extracted text for non-LaTeX inputs)
 
 **If zero figure files are found**, warn the user: "No figure files were found in standard locations. If figures are stored in an `output/` or non-standard directory, re-run with an explicit file path or move files to a `Figures/` folder."
 
-**If zero table files are found**, warn the user: "No table .tex files were found in standard locations. Tables may be stored in an `output/` or non-standard directory. Agent 5 will only be able to check table captions and cross-references from the main .tex files."
+**If `INPUT_MODE = "latex"` and zero table files are found**, warn the user: "No table .tex files were found in standard locations. Tables may be stored in an `output/` or non-standard directory. Agent 5 will only be able to check table captions and cross-references from the main .tex files."
 
 ## Phase 2: Launch 6 Review Agents in Parallel
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. Pass the complete list of .tex file paths, figure paths, and table paths to each agent in its prompt. When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
+In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. If `INPUT_MODE = "latex"`, pass the complete list of `.tex` file paths, figure paths, and table paths to each agent in its prompt. If `INPUT_MODE = "plain"`, pass `_review_input.txt` as the single content file, along with figure paths and empty table paths as applicable. In each agent prompt where `[LIST ALL TEX FILE PATHS HERE]` appears, fill that placeholder as follows: if `INPUT_MODE = "latex"`, use the existing behavior; if `INPUT_MODE = "plain"`, replace the placeholder instruction with: "The paper has been extracted to `_review_input.txt`. Read that file as the full paper content. There are no separate component files." When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
 
 ---
 
 ### AGENT 1 — Spelling, Grammar & Academic Style
 
-You are a copy editor at a top economics journal. Read all .tex files in the following list and perform a thorough review. Ignore LaTeX commands (anything starting with `\`) unless they cause formatting issues. Focus on the actual prose.
+You are a copy editor at a top psychology or neuroscience journal. Read all .tex files in the following list and perform a thorough review. Ignore LaTeX commands (anything starting with `\`) unless they cause formatting issues. Focus on the actual prose.
 
 **What to check:**
 
@@ -75,7 +125,7 @@ You are a copy editor at a top economics journal. Read all .tex files in the fol
    - Inconsistent first person ("we find" in some places, "the paper argues" in others)
 
 5. **Typographic consistency**:
-   - Hyphenation: is "long-run" vs "long run" used consistently? Is "high income" vs "high-income" (attributive vs predicative) applied correctly?
+   - Hyphenation: is "trial-by-trial" vs "trial by trial" used consistently? Is "whole brain" vs "whole-brain" (attributive vs predicative) applied correctly?
    - Em-dash vs en-dash vs hyphen used correctly
    - Spacing around punctuation
 
@@ -104,11 +154,11 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ### AGENT 2 — Internal Consistency & Cross-Reference Verification
 
-You are a technical reviewer checking whether an economics paper is internally coherent. Read all .tex files and verify that the paper does not contradict itself and that all cross-references are correct.
+You are a technical reviewer checking whether a psychology or neuroscience paper is internally coherent. Read all .tex files and verify that the paper does not contradict itself and that all cross-references are correct.
 
 **What to check:**
 
-1. **Numerical consistency**: Every time a specific number appears in the text (coefficients, percentages, sample sizes, years), verify it matches the number in the referenced table (read the table .tex file directly). Flag discrepancies such as "text says 1.3% but Table 2 Column 3 shows 1.2%." Note: numbers embedded in figures (e.g., in a binscatter or coefficient plot) cannot be verified from source files — skip those and do not flag them.
+1. **Numerical consistency**: Every time a specific number appears in the text (effect sizes, percentages, sample sizes, trial counts, parameter estimates, ROI values), verify it matches the number in the referenced table (read the table .tex file directly). Flag discrepancies such as "text says d = 0.31 but Table 2 reports d = 0.27" or "text says the vmPFC contrast was 0.42 but the table reports 0.36." Note: numbers embedded in figures cannot be verified from source files — skip those and do not flag them.
 
 2. **Abstract vs. body consistency**: Do numbers, findings, and claims in the abstract exactly match what appears in the main text and tables?
 
@@ -116,11 +166,11 @@ You are a technical reviewer checking whether an economics paper is internally c
 
 4. **Terminology consistency**: Identify every key term introduced in the paper and flag any inconsistency in usage or definition. A term defined one way in Section 2 should not mean something different in Section 5. Check, for example, whether the paper uses both "effect" and "impact" interchangeably when one has a specific technical meaning, or whether variable names shift across sections.
 
-5. **Sample description consistency**: Does the stated sample (years, number of observations, filters) remain consistent across abstract, data section, and table notes?
+5. **Sample description consistency**: Does the stated sample (participant counts, exclusion criteria, trial counts, runs/sessions, analyzed scans) remain consistent across abstract, methods, results, and table notes?
 
-6. **Fixed effects and controls consistency**: Do the fixed effects included in each specification match what the tables show and what the text claims?
+6. **Design, covariate, and model-specification consistency**: Do the task conditions, contrast definitions, covariates, random effects, ROIs, or model terms included in each analysis match what the tables show and what the text claims?
 
-7. **Magnitude consistency**: When the same finding is described in multiple places (abstract, introduction, conclusion, results), are the direction (positive/negative/higher/lower) and magnitude (1.3%, 14 cumulative percentage points, etc.) stated consistently?
+7. **Magnitude consistency**: When the same finding is described in multiple places (abstract, introduction, conclusion, results), are the direction (positive/negative/higher/lower) and magnitude (e.g., d = 0.31, 42 ms, 0.18 parameter units, 0.6% signal change) stated consistently?
 
 8. **Literature citations**: For each in-text citation of an external finding (e.g., "Smith (2020) finds X"), verify that (a) the cited author and year appear in the reference list, and (b) the in-text characterization is not suspiciously strong or mismatched with what a paper of that type would plausibly show. Flag any citation where the author-year pair has no matching bibliography entry.
 
@@ -147,34 +197,34 @@ Table files: [LIST TABLE PATHS]
 
 ---
 
-### AGENT 3 — Unsupported Claims & Identification Integrity
+### AGENT 3 — Unsupported Claims & Experimental Design Integrity
 
-You are a skeptical econometrician who enforces "claim discipline" — the principle that claims must never exceed what identification allows. Read all .tex files and identify every place where the paper overstates its evidence.
+You are a skeptical methodologist reviewing a psychology or neuroscience paper. Your role is "claim discipline" — the principle that claims must never exceed what the experimental or computational design supports. Read all content files and identify every place where the paper overstates its evidence.
 
 **What to check:**
 
-1. **Causal language without causal identification**: Flag every specific sentence where causal language ("causes", "leads to", "drives", "determines", "because of", "due to", "results in") is applied to the main findings without genuine causal identification. Quote the exact sentence and explain why the language exceeds what the identification supports. Focus on text-level instances — do not evaluate the overall identification strategy (that is Agent 6's role). Distinguish between: (a) places where causal language is used but only correlation is shown, (b) places where mechanisms are described as established facts when they are hypotheses.
+1. **Causal language without causal warrant**: Flag every specific sentence where causal language ("causes", "leads to", "drives", "determines", "because of", "due to", "results in") is applied to findings from correlational, observational, or cross-sectional designs. Also flag: (a) claims that neural activation "reflects", "underlies", or "drives" a cognitive process when only a correlation is shown; (b) between-group comparisons framed causally when participants were not randomly assigned; (c) claims that a computational model "reveals" a mechanism rather than fits a behavioral pattern. Quote the exact sentence and explain why the language exceeds what the design supports. Focus on text-level instances — do not evaluate the overall research design (that is Agent 6's role).
 
-2. **Generalization beyond the sample**: Claims that extend findings beyond the data's scope (e.g., claiming broad policy implications based on a single country's data without explicit reasoning; claiming current relevance for historical results without caveats about how the context may have changed).
+2. **Generalization beyond the sample**: Claims that extend findings beyond the data's scope without adequate caveats. Flag: (a) WEIRD population concerns (Western, Educated, Industrial, Rich, Democratic) when the sample is narrow and claims are broad; (b) generalization from patient populations to healthy individuals or vice versa without explicit justification; (c) extrapolation from a single lab task to naturalistic behavior or real-world outcomes; (d) claims about stable individual traits based on single-session measurements.
 
-3. **Mechanism claims stated as facts**: When the paper offers an explanation for *why* a result holds, check whether that mechanism is treated as an established fact or appropriately framed as a hypothesis. Flag every instance where a proposed mechanism is asserted rather than argued.
+3. **Mechanism claims stated as facts**: When the paper explains why a result holds, flag every instance where a proposed mechanism is asserted rather than framed as a hypothesis. This applies with particular force to: computational model parameters interpreted as cognitive constructs without parameter recovery evidence; BOLD signal differences described as reflecting specific computations without convergent behavioral evidence.
 
-4. **Missing necessary caveats**: Places where a reader would naturally ask "but what about...?" and the paper doesn't address it. Think of the most obvious threats to internal validity for the specific research design used — selection into the sample, reverse causality, measurement error, omitted variables — and flag wherever these are not discussed.
+4. **Missing caveats and design confounds**: Flag the most obvious threats to validity for the specific design used: demand characteristics and task framing effects; order and practice effects in within-subject designs; absence of manipulation checks for the key experimental construct; underpowered sample for the effect size range the paper implicitly assumes; multiple comparisons without correction or pre-registration; preprocessing pipeline choices in neuroimaging that are consequential but undisclosed or unjustified; model identifiability concerns for computational models (can different parameter combinations produce indistinguishable behavioral predictions?).
 
-5. **Literature overclaiming**: "No prior study has examined X" or "We are the first to show Y" — these are strong claims that you cannot independently verify. Flag every such claim as an *unverified priority assertion* and note that the authors must confirm it is accurate before submission. Do not attempt to judge whether it is true.
+5. **Literature overclaiming**: "No prior study has examined X" or "We are the first to show Y" — these are strong claims. Flag every such claim as an *unverified priority assertion* and note that the authors must confirm it before submission. Do not attempt to judge whether it is true.
 
-6. **Statistical vs. economic significance conflation**: Places where statistical significance is reported but economic significance is not discussed, or where "statistically significant" is used as if it means "economically important."
+6. **Statistical vs. practical significance**: Flag: (a) key comparisons where effect size estimates (Cohen's d, partial eta-squared, Bayes factors, or equivalent) are absent; (b) null results presented as evidence of absence without power analysis or equivalence testing; (c) "statistically significant" used as if it means "large" or "clinically meaningful."
 
 7. **Hedging failures in both directions**:
-   - **Overconfident**: Claims stated too strongly
-   - **Underconfident**: Results that are strong but the paper hedges excessively
+   - **Overconfident**: Claims stated too strongly given the evidence
+   - **Underconfident**: Results that are strong but the paper hedges excessively, underselling the actual finding
 
 **Output format:**
 
 Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of its line.
 
 ```
-## Agent 3: Unsupported Claims & Identification Integrity
+## Agent 3: Unsupported Claims & Experimental Design Integrity
 
 ### Causal Overclaiming (must address)
 [numbered list: [CRITICAL] or [MAJOR] [Section/paragraph] | "Exact quoted text" | Why it overclaims | Fix: weaken language OR add evidence]
@@ -182,7 +232,7 @@ Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the sta
 ### Generalization Issues
 [numbered list: [MAJOR] or [MINOR] same format]
 
-### Missing Caveats
+### Missing Caveats & Design Confounds
 [numbered list: [CRITICAL] or [MAJOR] Topic | Where it should be addressed | Suggested text]
 
 ### Minor Language Issues
@@ -195,14 +245,14 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ### AGENT 4 — Mathematics, Equations & Notation
 
-You are a mathematical economist reviewing the formal content of an economics paper. Read all .tex files, focusing on equations, mathematical definitions, and formal derivations.
+You are a quantitative reviewer examining the formal and statistical content of a psychology or neuroscience paper. Read all .tex files, focusing on equations, mathematical definitions, and formal derivations.
 
 **What to check:**
 
 1. **Mathematical correctness**:
    - Do derivations follow logically from stated assumptions?
    - Are there algebraic or arithmetic errors?
-   - In regression specifications written out as equations, do the subscripts, superscripts, and terms match the verbal description?
+   - In written quantitative specifications (e.g., mixed-effects models, Bayesian models, reinforcement-learning models, GLMs, hierarchical models), do the subscripts, superscripts, and terms match the verbal description?
 
 2. **Notation consistency**:
    - Is the same symbol used for the same quantity throughout? List all symbols defined in the paper and flag any reuse.
@@ -218,20 +268,15 @@ You are a mathematical economist reviewing the formal content of an economics pa
    - Are there numbered equations that are never referenced (consider removing)?
    - Are equation references correct (e.g., "equation (3)" refers to the right equation)?
 
-5. **Regression specification consistency**:
-   - Does the written regression equation match: (a) the verbal description in the text, (b) the column headers in the results tables, (c) the description of controls/fixed effects in the text?
-   - Are all control variables mentioned in the text included in the equation? Are there variables in the equation not mentioned in the text?
+5. **Model specification consistency**:
+   - Does the written model or analysis specification match: (a) the verbal description in the text, (b) the labels or headers in the results tables, (c) the stated conditions, contrasts, predictors, random effects, priors, or hierarchical structure?
+   - Are all stated model terms, covariates, or priors included in the equation or formal description? Are there terms in the equation not mentioned in the text?
 
-6. **Return/growth rate definitions**:
-   - Are annualization formulas correct? (e.g., $r = (P_1/P_0)^{1/h} - 1$ for holding period $h$)
-   - Are percentage vs. percentage point distinctions maintained?
-   - Are log approximations flagged when used?
-
-7. **Statistical notation**:
+6. **Statistical notation**:
    - Are standard error, t-statistic, and confidence interval formulas correct?
-   - Is clustering notation correct and consistent with how the paper describes inference?
+   - Is the notation for uncertainty, random effects, priors/posteriors, likelihoods, or correction procedures correct and consistent with how the paper describes inference?
 
-8. **LaTeX math formatting issues**:
+7. **LaTeX math formatting issues**:
    - Missing `\left` and `\right` for large brackets/parentheses
    - Improper use of `*` for multiplication (should use `\cdot` or `\times`)
    - Text in math mode not wrapped in `\text{}`
@@ -253,8 +298,8 @@ Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the sta
 ### Undefined Notation
 [numbered list: [MAJOR] or [MINOR] Symbol | First used at [location] | Where to add definition]
 
-### Regression Specification Issues
-[numbered list: [CRITICAL] or [MAJOR] Table/Specification | Discrepancy between equation, text, and table]
+### Model Specification Issues
+[numbered list: [CRITICAL] or [MAJOR] Model/Specification | Discrepancy between equation or formal description, text, and table/figure]
 
 ### LaTeX Math Formatting
 [numbered list: [MINOR] Location | Issue | Fix]
@@ -266,7 +311,7 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 ### AGENT 5 — Tables, Figures & Their Documentation
 
-You are a journal production editor reviewing whether every table and figure in an economics paper is complete, self-contained, and correctly described. Read all .tex files.
+You are a journal production editor reviewing whether every table and figure in a psychology or neuroscience paper is complete, self-contained, and correctly described. Read all .tex files.
 
 **Important**: Figure files (PDF, PNG, EPS, JPG) cannot be read directly. Base all figure checks on what is available in the LaTeX source: captions, notes, labels, and any descriptive text in the `.tex` files. If a figure's `.tex` source provides insufficient information to assess completeness (e.g., no notes block at all), flag that explicitly rather than skipping it.
 
@@ -274,16 +319,15 @@ You are a journal production editor reviewing whether every table and figure in 
 
 1. **Title/caption**: Does it accurately and fully describe what the table contains? Can a reader understand the table without reading the body of the paper?
 
-2. **Column headers**: Are they clear, unambiguous, and complete? Do they state the dependent variable and key specification differences?
+2. **Column headers**: Are they clear, unambiguous, and complete? Do they state the outcome measure, contrast, parameter estimate, and key analysis differences?
 
 3. **Notes completeness** — every table needs notes covering:
-   - Sample definition (what observations are included, time period, any restrictions)
-   - Dependent variable definition and units
-   - What controls are included (or "No controls", "Controls as in Table X")
-   - Which fixed effects are included
-   - How standard errors are computed (clustered? at what level?)
+   - Sample definition (which participants/trials/runs are included, any exclusion criteria or restrictions)
+   - Outcome measure, contrast, or parameter definition and units
+   - Which task conditions, model terms, covariates, ROIs, or contrasts are included (or whether the specification matches another table)
+   - How uncertainty is summarized (standard errors, confidence/credible intervals, posterior summaries, or another quantity)
    - Definition of significance stars (e.g., *** p<0.01, ** p<0.05, * p<0.10)
-   - Whether the table reports standard errors, t-statistics, or something else
+   - Whether the table reports standard errors, test statistics, interval estimates, Bayes factors, or something else
 
 4. **Standard errors**: Are they reported in every column? Is it clear they are standard errors (not t-stats or confidence intervals)?
 
@@ -291,8 +335,7 @@ You are a journal production editor reviewing whether every table and figure in 
 
 6. **Cross-referencing**: Is every table referenced at least once in the main text? Are there tables defined but never cited? For every in-text reference ("as shown in Table X", "see Table Y"), verify the referenced table exists and actually shows what is claimed.
 
-7. **Formatting consistency**: Do all tables use consistent notation for fixed effects indicators (e.g., "Yes/No" vs checkmarks vs "✓")?
-
+7. **Formatting consistency**: Do all tables use consistent notation for repeated analysis features (e.g., ROI labels, condition names, random-effects terms, or "Yes/No" indicators)?
 **For every figure, check:**
 
 1. **Title/caption**: Does it describe what is shown? Is it self-contained?
@@ -302,15 +345,15 @@ You are a journal production editor reviewing whether every table and figure in 
 3. **Legend**: If multiple series or colors, is there a legend?
 
 4. **Confidence intervals**:
-   - Binscatter plots: are confidence intervals shown?
-   - Coefficient plots: are confidence intervals shown?
-   - Event study plots: are confidence intervals shown?
+   - Behavioral summary plots: are uncertainty intervals or error bars shown when appropriate?
+   - Parameter estimate or model-fit plots: are uncertainty intervals shown?
+   - Time-course, contrast, or decoding plots: are uncertainty intervals shown where relevant?
 
 5. **Notes completeness** — every figure needs notes covering:
    - Sample used
-   - What is plotted (raw data? residuals after controls?)
-   - For binscatters: number of bins, whether controls are absorbed, what the dots represent
-   - For coefficient plots: what the point estimates and intervals represent
+   - What is plotted (behavioral summary, trial-level data, ROI estimate, whole-brain contrast, model fit, parameter recovery, etc.)
+   - For behavioral summary plots: what the points/bars/lines represent and whether they are participant-level or condition-level summaries
+   - For parameter estimate, model-fit, or parameter-recovery plots: what the estimates and intervals represent
    - Data source
 
 6. **Cross-referencing**: Is every figure referenced in the main text? Any figures defined but never cited? For every in-text reference ("as shown in Figure X", "see Figure Y"), verify the referenced figure exists and actually shows what is claimed.
@@ -348,8 +391,8 @@ Table files: [LIST TABLE PATHS]
 ### AGENT 6 — Contribution Evaluation (Adversarial Top-5 Referee)
 
 You are a demanding associate editor. Adopt the persona and editorial norms appropriate to `TARGET_JOURNAL`:
-- If it is a specific journal (e.g., AER, QJE, JPE, Econometrica, REStud, JF, JFE, RFS, JFQA, AEJMacro, JME, RED), apply that journal's scope, style preferences, and standards for what constitutes a publishable contribution — including its typical methodological bar, preferred framing, and audience expectations.
-- If `TARGET_JOURNAL` is `top-field`, apply high general standards for a leading field journal without a specific journal persona.
+- If it is a specific journal (e.g., NatureNeuro, Neuron, eLife, CurrBiol, NatureHB, PNAS, PsychSci, JNeurosci, NeuroImage, CerebCortex, PLoSCB, PLoSOne, CommsPsych), apply that journal's scope, style preferences, and standards for what constitutes a publishable contribution — including its typical methodological bar, preferred framing, and audience expectations.
+- If `TARGET_JOURNAL` is `top-field`, apply high general standards for a leading journal in the relevant area without a specific journal persona.
 
 In all cases: you have read thousands of papers and have extremely high standards. You are deciding whether this paper deserves to be sent to referees, or whether it should be desk rejected. You are not hostile, but you are exacting, specific, and rigorous. You will read the complete paper and produce a structured evaluation.
 
@@ -362,34 +405,34 @@ Read all .tex files completely and thoroughly.
 State in one sentence what the paper claims to contribute. Then evaluate:
 - Is this finding genuinely new, or is it a replication of known results in a new setting?
 - What is the closest prior paper? What does this paper add beyond that paper?
-- Does the paper answer a question that reasonable economists disagree about, or that the profession needs answered?
-- Does this finding change how economists think about the paper's central topic?
+- Does the paper address a question that the field considers open, or where existing evidence is ambiguous or contested?
+- Does this finding change how researchers in the field think about the paper's central topic, or does it add a data point to an already-settled question?
 - Rate the contribution: [Transformative | Significant | Incremental | Insufficient for target journal]
 - Justify your rating in 2-3 sentences.
 
-**Part 2 — Identification and Credibility**
+**Part 2 — Design and Credibility**
 
-Evaluate the overall identification strategy — not individual sentences with causal language (that is Agent 3's role). Focus on the research design as a whole.
+Evaluate the overall experimental or computational design — not individual sentences with causal language (that is Agent 3's role). Focus on the research design as a whole.
 
-- What variation does the paper use to identify its main result?
-- Is this variation plausibly exogenous? What are the main threats?
-- Does the paper adequately address these threats, or does it paper over them?
+- What is the design (experimental, quasi-experimental, observational, computational modeling, neuroimaging)? Is it appropriate for the central claim?
+- What are the main threats to internal validity? Are confounds controlled, randomized, or left unaddressed?
+- If the paper uses computational modeling: are the model assumptions stated, is parameter recovery demonstrated, and are alternative models compared?
+- If the paper uses fMRI or other neuroimaging: are preprocessing choices justified, is the multiple comparisons correction appropriate, and are ROI definitions pre-specified or exploratory?
 - Is the main finding causal, correlational, or descriptive? Does the paper claim the right thing?
-- Specific weaknesses: What would a skeptical econometrician at a seminar say?
-- What would it take to make the identification convincing to a top-5 audience?
+- What would a skeptical reviewer with deep methods expertise in this area say at a conference?
+- What would it take to make the design convincing to a demanding editor at the target journal?
 
 **Part 3 — Analyses: Required and Suggested**
 
-**Required analyses** (up to 5 you would require before recommending acceptance — their absence is a blocker; if none are missing, write "None — the paper adequately addresses the main identification concerns"):
-- Robustness checks not performed — including any robustness checks the paper claims to have done but that do not actually appear
-- Alternative explanations not ruled out
-- Placebo or falsification tests that are missing
+**Required analyses** (up to 5 you would require before recommending acceptance — their absence is a blocker; if none are missing, write "None — the paper adequately addresses the main design and evidentiary concerns"):
+- Missing confirmatory or sensitivity analyses — including any analyses the paper claims to have done but that do not actually appear
+- Missing control analyses, manipulation checks, negative-control contrasts, permutation tests, or parameter-recovery/model-recovery checks where appropriate
 For each: state what the analysis is, why its absence undermines the paper's credibility, and what a positive result would do for your view.
 
 **Suggested analyses** (up to 5 that would substantially strengthen the paper but are not hard requirements):
 - Mechanism tests that are missing
-- Subgroup analyses that would enrich the findings
-- Extensions that would broaden the contribution
+- Individual-differences, ROI, or condition-specific analyses that would enrich the findings
+- Extensions that would broaden the contribution or improve generalizability
 For each: describe the analysis precisely, explain why it matters, and assess whether it is feasible given the data sources described in the paper.
 
 **Part 4 — Literature Positioning**
@@ -421,7 +464,7 @@ Tag every Required analysis with `[CRITICAL]` and every Suggested analysis with 
 ### Part 1 — Central Contribution
 [assessment + rating]
 
-### Part 2 — Identification and Credibility
+### Part 2 — Design and Credibility
 [assessment]
 
 ### Part 3 — Analyses: Required and Suggested
@@ -485,7 +528,7 @@ where `[YYYY-MM-DD]` is today's date.
 
 ---
 
-## 2. Unsupported Claims & Identification Integrity
+## 2. Unsupported Claims & Experimental Design Integrity
 
 [Agent 3 output]
 
@@ -541,3 +584,5 @@ After saving, report to the user:
 2. The preliminary recommendation from Agent 6
 3. The top 5 priority action items
 4. How many issues were flagged in each category (counts)
+
+If `CREATED_REVIEW_INPUT = true` for this run, delete `_review_input.txt` after saving the report.

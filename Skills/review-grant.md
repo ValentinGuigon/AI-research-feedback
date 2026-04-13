@@ -36,11 +36,27 @@ If a file path was provided, use it as the main proposal file. Otherwise, auto-d
    - Proposal title, PI(s)/team, abstract/summary if available
    - Any explicit funding call, solicitation, or sponsor named in the materials
 
-If the proposal is in a binary format such as `.pdf` or `.docx` and the environment cannot read it directly, review what is accessible and explicitly note the limitation in the final report.
+Set `CREATED_REVIEW_INPUT = false`.
+
+If the resolved file is `.tex`, `.txt`, or `.md`:
+- Set `INPUT_MODE = "plain-direct"`. Read directly. Do not create `_review_input.txt`.
+
+If the resolved file is `.pdf`:
+- Set `INPUT_MODE = "plain"`.
+- Run: `pdftotext -layout "<path>" _review_input.txt`
+- Fallback: `python3 -c "import pypdf; r=pypdf.PdfReader('<path>'); open('_review_input.txt','w').write('\n'.join(p.extract_text() for p in r.pages))"`
+- If both fail, halt with install instructions for pdftotext (poppler-utils) or pypdf.
+- Set `CREATED_REVIEW_INPUT = true`.
+
+If the resolved file is `.docx`:
+- Set `INPUT_MODE = "plain"`.
+- Run: `pandoc "<path>" -t plain -o _review_input.txt`
+- If pandoc unavailable, halt with install instructions.
+- Set `CREATED_REVIEW_INPUT = true`.
 
 ## Phase 2: Launch 6 Review Agents in Parallel
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the proposal materials independently. Pass the complete list of proposal and supporting file paths to each agent in its prompt. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_PROGRAM` for every occurrence of `TARGET_PROGRAM` in that agent's prompt text.
+In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the proposal materials independently. Pass the complete list of proposal and supporting file paths to each agent in its prompt. When passing the proposal file path to agents: if `INPUT_MODE = "plain"`, substitute `_review_input.txt` for the main proposal file path in each agent's file list. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_PROGRAM` for every occurrence of `TARGET_PROGRAM` in that agent's prompt text.
 
 ---
 
@@ -457,3 +473,5 @@ After saving, report to the user:
 2. The preliminary recommendation from Agent 6
 3. The top 5 priority action items
 4. How many issues were flagged in each category (counts)
+
+If `CREATED_REVIEW_INPUT = true` for this run, delete `_review_input.txt`.

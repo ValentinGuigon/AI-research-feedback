@@ -1,8 +1,8 @@
 ---
 name: review-paper-code
-description: Review research code for reproducibility and quality, extract the paper's main empirical claims, compare paper to code, and write a constructive markdown report. Designed for social science / economics projects with LaTeX papers and Stata, R, or Python code.
+description: Review research code for reproducibility and quality, extract the paper's main empirical claims, compare paper to code, and write a constructive markdown report. Designed for psychology and neuroscience projects with papers in any supported format and Python, R, MATLAB, or BIDS pipeline code.
 user-invocable: true
-argument-hint: [optional: path/to/main.tex] [optional: path/to/code_dir] [optional: main|full]
+argument-hint: [optional: path/to/paper] [optional: path/to/code_dir] [optional: main|full]
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 ---
 
@@ -13,8 +13,8 @@ Review a research project's paper and code for reproducibility, code quality, an
 ## Scope
 
 This skill supports:
-- LaTeX papers
-- Stata (`.do`), R (`.R`, `.r`), and Python (`.py`) code
+- Papers in supported formats: LaTeX (`.tex`), Markdown (`.md`), PDF (`.pdf`), and Word (`.docx`)
+- Python (`.py`), R (`.R`, `.r`), MATLAB (`.m`), notebook (`.ipynb`), shell (`.sh`), and BIDS pipeline code
 
 Default review depth:
 - `main`: prioritize the main paper, main scripts, and core outputs
@@ -25,7 +25,7 @@ If no depth is provided, default to `main`.
 ## Phase 1: Discover the Project
 
 First parse `$ARGUMENTS`:
-- If one argument looks like a `.tex` path, use it as `PAPER_FILE`.
+- If one argument looks like a `.tex`, `.md`, `.pdf`, or `.docx` path, use it as `PAPER_FILE`.
 - If one argument looks like a directory path, use it as `CODE_DIR`.
 - If one argument is `main` or `full`, use it as `REVIEW_DEPTH`.
 
@@ -33,14 +33,48 @@ If any of the above are missing, auto-detect them.
 
 ### 1. Find the paper
 
-Use Glob to search for `**/*.tex`, excluding obvious build folders such as `_minted-*`, `build/`, `output/`, `.git/`, `node_modules/`.
+After parsing the file path, detect the paper format and set `INPUT_MODE` plus a cleanup flag `CREATED_REVIEW_INPUT = false`.
 
-Identify the main paper file as the best candidate containing `\documentclass` or `\begin{document}`.
+If a file path was provided:
 
-If multiple candidates exist, prefer:
-1. A path explicitly provided in `$ARGUMENTS`
-2. A file in `Writing/`, `writing/`, `Paper/`, `paper/`, `Draft/`, or the repo root
-3. The file that appears to include the most component files via `\input{}` / `\include{}`
+1. Detect the extension: `.tex`, `.md`, `.pdf`, or `.docx`.
+2. If the extension is unrecognized, halt and tell the user: "Unsupported file format. Supported formats: .tex, .md, .pdf, .docx."
+
+If no file path was provided, auto-detect in this priority order:
+
+1. First, look for a `.tex` file containing `\documentclass`.
+2. Then look for root-level `.md` files, preferring `main.md`, then `paper.md`, then the alphabetically first `.md` file in the root.
+3. Then look for a single `.pdf` in the root directory.
+4. Then look for a single `.docx` in the root directory.
+5. If nothing is found, halt and tell the user that you searched for: a `.tex` main document in the current directory tree (excluding `_minted-*` and build output folders), root-level `.md` files (preferring `main.md` or `paper.md`), a single root-level `.pdf`, and a single root-level `.docx`.
+
+If the resolved input is `.tex`, set `INPUT_MODE = "latex"` and keep the existing logic exactly:
+
+1. Use Glob to search for `**/*.tex`, excluding obvious build folders such as `_minted-*`, `build/`, `output/`, `.git/`, `node_modules/`.
+2. Identify the main paper file as the best candidate containing `\documentclass` or `\begin{document}`.
+3. If multiple candidates exist, prefer:
+   1. A path explicitly provided in `$ARGUMENTS`
+   2. A file in `Writing/`, `writing/`, `Paper/`, `paper/`, `Draft/`, or the repo root
+   3. The file that appears to include the most component files via `\input{}` / `\include{}`
+
+If the resolved input is `.md`, set `INPUT_MODE = "plain"` and:
+
+1. Read the Markdown file directly.
+2. Write its contents unchanged to `_review_input.txt`.
+3. Set `CREATED_REVIEW_INPUT = true`.
+
+If the resolved input is `.pdf`, set `INPUT_MODE = "plain"` and:
+
+1. Run: `pdftotext -layout "<path>" _review_input.txt`
+2. If `pdftotext` is not available, run: `python3 -c "import pypdf; r=pypdf.PdfReader('<path>'); open('_review_input.txt','w').write('\n'.join(p.extract_text() for p in r.pages))"`
+3. If both fail, halt and tell the user to install `pdftotext` (`poppler-utils`) or `pypdf`.
+4. Set `CREATED_REVIEW_INPUT = true`.
+
+If the resolved input is `.docx`, set `INPUT_MODE = "plain"` and:
+
+1. Run: `pandoc "<path>" -t plain -o _review_input.txt`
+2. If `pandoc` is not available, halt and tell the user to install pandoc.
+3. Set `CREATED_REVIEW_INPUT = true`.
 
 Record the result as `PAPER_FILE`.
 
@@ -63,15 +97,26 @@ Record the result as `CODE_DIR`.
 ### 3. Find code files
 
 Within `CODE_DIR` and subdirectories, find:
-- `**/*.do`
+- `**/*.py`
 - `**/*.R`
 - `**/*.r`
-- `**/*.py`
+- `**/*.m`
+- `**/*.ipynb`
+- `**/*.sh`
+
+Then search separately for BIDS and pipeline files:
+- `dataset_description.json` (BIDS root marker)
+- `participants.tsv`
+- `**/*model*.json` and `**/*statsmodel*.json` (BIDS stats model files)
+- `**/*_events.tsv` (up to 10; record count if more)
+- Any files named `fmriprep*`, `fitlins*`, or located under `derivatives/fmriprep/` or `derivatives/fitlins/` (record presence, do not attempt to read all)
+
+Record these as `BIDS_FILES` (present/absent for each category).
 
 Exclude obvious caches, environments, and generated folders where appropriate.
 
 If `REVIEW_DEPTH = main`, prioritize:
-- Master scripts such as `main.do`, `master.do`, `run_all.R`, `main.R`, `main.py`, `run.py`
+- Master scripts such as `main.py`, `run.py`, `run_all.py`, `run_analysis.py`, `main.R`, `run_all.R`, `main.m`, `run.sh`
 - Files referenced by those scripts
 - Files that generate tables, figures, or final datasets
 - If no master script exists, select the most central files and cap the initial review set at a reasonable number
@@ -81,6 +126,7 @@ If `REVIEW_DEPTH = full`, include all detected code files.
 Record:
 - `CODE_FILES_ALL`
 - `CODE_FILES_REVIEWED`
+- `BIDS_FILES`
 - languages present
 
 ### 4. Find supporting documentation
@@ -98,7 +144,7 @@ If you find a paper and at least some code, continue even if discovery is imperf
 
 Only stop if you cannot find either:
 - a main paper file, or
-- any relevant Stata, R, or Python code files
+- any relevant Python, R, MATLAB, notebook, shell, or BIDS pipeline code files
 
 If you stop, tell the user briefly what was missing and what paths they can pass explicitly.
 
@@ -111,12 +157,14 @@ Before proceeding, tell the user:
 
 ## Phase 2: Read the Paper
 
-Read `PAPER_FILE`.
+If `INPUT_MODE = "latex"`, read `PAPER_FILE`.
 
 Recursively read files referenced by:
 - `\input{}`
 - `\include{}`
 - `\subfile{}`
+
+If `INPUT_MODE = "plain"`, read `_review_input.txt` as the full paper content.
 
 Extract a compact working summary for later cross-checking:
 - Paper title
@@ -125,8 +173,11 @@ Extract a compact working summary for later cross-checking:
 - Main data sources
 - Main dependent variables
 - Main explanatory variables or treatments
-- Main estimation methods
-- Fixed effects and clustering, if stated
+- Study design type (experimental, observational, computational modeling, neuroimaging, or combination)
+- Main task(s) or paradigm(s)
+- If neuroimaging: acquisition type, key preprocessing choices stated in paper
+- If computational modeling: model name/family, key parameters reported
+- Statistical approach and any correction for multiple comparisons stated
 - Main sample restrictions
 - Main tables and figures only
 - Headline quantitative claims only
@@ -149,11 +200,12 @@ Store as `CODE_REVIEW_SUMMARY`.
 
 Prompt:
 
-> You are reviewing research code for reproducibility and code quality in a social science / economics project.
+> You are reviewing research code for reproducibility and code quality in a psychology or neuroscience project.
 >
 > Files in scope:
 > - Reviewed code files: [insert `CODE_FILES_REVIEWED`]
 > - README / documentation files: [insert discovered supporting files or "none found"]
+> - BIDS files: [insert `BIDS_FILES`]
 >
 > Review the files and produce a compact report focused on the most decision-relevant findings.
 >
@@ -166,6 +218,8 @@ Prompt:
 > 6. Run order and presence of a master script or documented pipeline
 > 7. Large commented-out blocks, weak script structure, or hard-to-follow long files
 > 8. Opaque transformations, unexplained filters, recodes, merges, or thresholds that are important for interpretation
+> 9. **BIDS compliance** (if `BIDS_FILES` indicates a neuroimaging project): Is a `dataset_description.json` present at the root? Are event files (`*_events.tsv`) present for task-based fMRI? Is the BIDS stats model JSON (`*model*.json`) present and does it specify contrasts? Flag absent required files as MISSING.
+> 10. **Computational model code** (if Python or MATLAB files implement a behavioral or neural model): Are fitting functions and model comparison scripts present? Is there a parameter recovery script (simulation from known parameters to verify identifiability)? Are priors stated for Bayesian models? Flag absent components as MISSING or VERIFY as appropriate.
 >
 > Use these labels:
 > - PASS: looks solid
@@ -226,8 +280,10 @@ Prompt:
 > 2. Main variables and treatments
 > 3. Main sample restrictions and time period
 > 4. Main estimation methods
-> 5. Fixed effects and clustering, if central
-> 6. Main datasets or intermediate analysis files
+> 5. Contrasts or conditions of interest as stated in the paper
+> 6. Main datasets, intermediate analysis files, or BIDS derivatives
+> 7. **BIDS stats model alignment** (if applicable): Do the contrasts defined in the BIDS stats model JSON match the contrasts reported in the paper? Flag any contrast in the paper with no corresponding entry in the model file, and any model contrast not mentioned in the paper.
+> 8. **Computational model alignment** (if applicable): Does the model implemented in code match the model described in the paper? Check: number of free parameters, parameter names, likelihood function or loss, fitting algorithm, and any model comparison procedure.
 >
 > Use these confidence labels:
 > - HIGH: clear and specific match
@@ -350,3 +406,5 @@ After writing the report, tell the user:
 - the `Overall Assessment`
 - 3-5 bullets from `What's Working Well`
 - the top 3 suggested next steps
+
+If `CREATED_REVIEW_INPUT = true` for this run, delete `_review_input.txt`.

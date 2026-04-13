@@ -7,9 +7,10 @@ You are coordinating a rigorous pre-submission review of a pre-analysis plan (PA
 ## Phase 1: Parse Arguments and Discover the PAP
 
 Parse `$ARGUMENTS` as follows:
+
 - The recognized registration targets are:
-  - **Trial registries**: `AEA`, `EGAP`, `OSF`, `ClinicalTrials`, `ISRCTN`
-  - **Journal standards**: `AER`, `QJE`, `JPE`, `RESTUD`, `AEJ`, `JEEA`
+  - **Trial registries**: `OSF`, `AsPredicted`, `ClinicalTrials`, `ISRCTN`
+  - **Journal standards**: `PsychSci`, `JNeurosci`, `NatureNeuro`, `eLife`, `NatureHB`, `PNAS`, `NeuroImage`, `CommsPsych`, `PLoSCB`
   - **General standards**: `top-journal`, `working-paper`
   - (case-insensitive; users can extend this list by editing this skill file)
 - If the first token of `$ARGUMENTS` matches one of these names, treat it as the **registration target** and treat any remaining text as the **main PAP file path**.
@@ -43,11 +44,26 @@ If a file path was provided, use it as the main PAP file. Otherwise, auto-detect
    - Named registration registry, trial ID, or journal if any
    - Whether any expected supporting file categories were not found
 
-If the PAP is in a binary format such as `.pdf` or `.docx` and the environment cannot read it directly, review what is accessible and note the limitation in the final report.
+7. After resolving the main PAP file, determine how it will be read:
+   - Set `CREATED_REVIEW_INPUT = false`.
+   - If the resolved main PAP file is `.tex` or `.txt` or `.md`:
+     - Set `INPUT_MODE = "plain-direct"`.
+     - Read the file directly. No extraction needed. Do not create `_review_input.txt`.
+   - If the resolved main PAP file is `.pdf`:
+     - Set `INPUT_MODE = "plain"`.
+     - Run: `pdftotext -layout "<path>" _review_input.txt`
+     - If `pdftotext` is not available, run: `python3 -c "import pypdf; r=pypdf.PdfReader('<path>'); open('_review_input.txt','w').write('\n'.join(p.extract_text() for p in r.pages))"`
+     - If both fail, halt and tell the user to install `pdftotext` (poppler-utils) or `pypdf`.
+     - Set `CREATED_REVIEW_INPUT = true`.
+   - If the resolved main PAP file is `.docx`:
+     - Set `INPUT_MODE = "plain"`.
+     - Run: `pandoc "<path>" -t plain -o _review_input.txt`
+     - If `pandoc` is not available, halt and tell the user to install `pandoc`.
+     - Set `CREATED_REVIEW_INPUT = true`.
 
 ## Phase 2: Launch 6 Review Agents in Parallel
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the PAP materials independently. Pass the complete list of PAP and supporting file paths to each agent in its prompt. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_REGISTRY` for every occurrence of `TARGET_REGISTRY` in that agent's prompt text.
+In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the PAP materials independently. Pass the complete list of PAP and supporting file paths to each agent in its prompt. When passing the PAP file path to agents: if `INPUT_MODE = "plain"`, substitute `_review_input.txt` for the main PAP file path in each agent's file list. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_REGISTRY` for every occurrence of `TARGET_REGISTRY` in that agent's prompt text.
 
 ---
 
@@ -89,6 +105,7 @@ You are a PAP editor reviewing the document for clarity, precision, and pre-spec
 Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line so the consolidation step can rank issues cleanly.
 
 **Output format:**
+
 ```
 ## Agent 1: Clarity, Writing Quality & Pre-specification Completeness
 
@@ -131,6 +148,7 @@ You are a technical reviewer checking whether the PAP is internally coherent: th
 Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
+
 ```
 ## Agent 2: Internal Consistency, Hypotheses & Outcomes
 
@@ -160,9 +178,9 @@ You are a skeptical referee evaluating whether the proposed study can credibly a
 1. **Research question clarity**: Is there a precise, testable research question? Or is the question so broad that almost any result would answer it?
 
 2. **Identification strategy**: What is the source of causal variation? Evaluate:
-   - For RCTs: is randomization described with enough precision to assess validity? Is compliance, attrition, and spillover risk addressed?
-   - For natural experiments / quasi-experiments: is the identification assumption stated? Is there a credible argument for why it holds?
-   - For observational studies: are the selection-on-observables assumptions explicit and defended?
+   - For randomized designs (RCTs, within-subject experiments, randomized behavioral paradigms): is randomization or counterbalancing described with enough precision to assess validity? Is compliance, attrition, and demand characteristic risk addressed?
+   - For quasi-experimental designs (longitudinal, interrupted time series, matched controls, natural variation): is the identification assumption stated and defended? What confounds are controlled versus unaddressed?
+   - For observational or correlational studies: are the assumptions required for the causal or directional claims made explicit? Is reverse causality addressed?
 
 3. **Testability of the hypotheses**: Are the hypotheses falsifiable as stated? Could the study plausibly produce evidence against them? Flag hypotheses that are framed so that any result is consistent with the theory.
 
@@ -179,6 +197,7 @@ You are a skeptical referee evaluating whether the proposed study can credibly a
 Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
+
 ```
 ## Agent 3: Identification Strategy, Causal Claims & Contribution
 
@@ -206,15 +225,17 @@ You are a demanding statistical reviewer assessing whether the proposed analysis
 **What to check:**
 
 1. **Power calculation adequacy**: For each primary outcome, evaluate:
-   - Is the assumed effect size plausible and justified (e.g., from pilot data, prior literature)?
-   - Are the assumed ICC, attrition rate, and design effect realistic for this context?
-   - Is the resulting MDE policy-relevant (not just statistically detectable)?
-   - Are power calculations provided for secondary outcomes or are they implicitly underpowered?
+   - Is the assumed effect size justified (e.g., from pilot data, prior literature, or meta-analysis)? Is the justification specific rather than generic?
+   - For between-subject designs: is sample size adequate for the assumed effect size and alpha level?
+   - For within-subject or repeated-measures designs: are the within-subject correlation and number of trials or conditions factored in?
+   - For neuroimaging studies: is the rationale for participant N grounded in published studies using comparable designs and analyses?
+   - Is the resulting detectable effect size policy-relevant or theoretically meaningful, not merely statistically detectable?
 
 2. **Estimator specification**: For each analysis, assess:
-   - Is the estimating equation (regression specification, controls, fixed effects) fully stated?
-   - Is the choice of standard error clustering justified given the study design?
-   - For IV or LATE estimates: is the first stage plausible? Are exclusion restrictions defended?
+   - Is the statistical model (regression, mixed-effects, Bayesian, or computational model) fully specified: outcome, predictors, random effects structure, and error distribution?
+   - For mixed-effects models: is the random effects structure pre-specified and justified?
+   - For Bayesian analyses: are priors stated and justified?
+   - For computational modeling: is the model comparison procedure pre-specified (e.g., BIC, LOO-CV, protected exceedance probability)?
 
 3. **Multiple testing**: Does the PAP address the risk of false positives from testing multiple hypotheses, outcomes, or subgroups?
    - Is a correction method specified (Bonferroni, BH, index, pre-specified family)?
@@ -235,6 +256,7 @@ You are a demanding statistical reviewer assessing whether the proposed analysis
 Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
+
 ```
 ## Agent 4: Statistical Analysis Plan, Power & Multiple Testing
 
@@ -296,6 +318,7 @@ You are a grants and implementation reviewer assessing whether the study is oper
 Tag every individual issue with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
+
 ```
 ## Agent 5: Data, Sample, Implementation & Operational Plan
 
@@ -319,10 +342,11 @@ The PAP files to review are: [LIST ALL FILE PATHS HERE]
 ### AGENT 6 — Adversarial Referee Review & Registration Recommendation
 
 You are a demanding referee and pre-registration reviewer. Adopt the persona and standards appropriate to `TARGET_REGISTRY`:
-- **AEA / EGAP / OSF**: apply the standards of the AEA RCT Registry or EGAP registry — expect clear causal identification, pre-specified primary outcomes, adequate power, and honest treatment of limitations.
-- **AER / QJE / JPE / RESTUD / AEJ / JEEA**: apply the standards of a top general-interest or field economics journal expecting credible identification, methodological rigor, and a clear contribution.
-- **ClinicalTrials / ISRCTN**: apply the standards of a clinical trial registry — expect CONSORT-style pre-specification, clear primary endpoint, and ethics documentation.
-- **top-journal**: apply high general standards for a competitive economics or social science journal without a specific venue persona.
+
+- **OSF / AsPredicted**: apply the standards of an open-science pre-registration — expect clearly pre-specified hypotheses, outcomes, and analysis plan, adequate power justification, and honest treatment of limitations.
+- **PsychSci / JNeurosci / NatureNeuro / eLife / NatureHB / PNAS / NeuroImage / CommsPsych / PLoSCB**: apply that journal's scope, methodological bar, and standards for what constitutes a publishable pre-registered contribution — including its typical sample size expectations, statistical reporting standards, and audience.
+- **ClinicalTrials / ISRCTN**: apply the standards of a clinical trial registry — expect CONSORT-style pre-specification, a clear primary endpoint, and ethics documentation.
+- **top-journal**: apply high general standards for a competitive psychology or neuroscience journal without a specific venue persona.
 - **working-paper**: apply the standard of a serious pre-print — is the PAP credible and specific enough that the eventual paper can credibly claim pre-registration?
 
 In all cases: you have reviewed many PAPs and papers. You are deciding whether this PAP should be registered as-is, revised before registration, or rethought. You are not hostile, but you are exacting and specific.
@@ -332,6 +356,7 @@ In all cases: you have reviewed many PAPs and papers. You are deciding whether t
 **Part 1 — The Core Research Case**
 
 State in one sentence what the PAP proposes to study and test. Then evaluate:
+
 - Is the research question important and answerable?
 - Does the identification strategy credibly support causal inference?
 - Is the PAP pre-specified tightly enough to constitute a binding commitment?
@@ -354,6 +379,7 @@ State in one sentence what the PAP proposes to study and test. Then evaluate:
 
 List 3-6 revisions that are necessary before this PAP should be registered or submitted.
 For each revision:
+
 - state precisely what must change
 - explain why it matters for credibility and referee scrutiny
 - explain what improvement it creates
@@ -372,6 +398,7 @@ Write 5-8 pointed questions that a skeptical referee or registry reviewer would 
 Tag every issue in Parts 2-6 with `[CRITICAL]`, `[MAJOR]`, or `[MINOR]` at the start of the line.
 
 **Output format:**
+
 ```
 ## Agent 6: Adversarial Referee Review & Registration Recommendation
 
@@ -416,7 +443,7 @@ where `[YYYY-MM-DD]` is today's date.
 **Study**: [Title]
 **PI(s)/Team**: [PI(s) or team]
 **Date**: [Today's date]
-**Review Standard**: [TARGET_REGISTRY — if `top-journal`, write "Top Economics/Social Science Journal"; if `working-paper`, write "Working Paper / General Pre-Registration Standard"; otherwise write the specific registry or venue name]
+**Review Standard**: [TARGET_REGISTRY — if `top-journal`, write "Top Psychology or Neuroscience Journal"; if `working-paper`, write "Working Paper / General Pre-Registration Standard"; otherwise write the specific registry or venue name]
 
 ---
 
@@ -433,34 +460,25 @@ that must be resolved before registration.]
 
 **Preliminary Recommendation**: [Register as-is | Revise before registering | Substantial revision required | Rethink design before registering]
 
-
 ## Priority Action Items
 
 The following issues require attention before registration, ordered by priority. When ranking across agents, apply this triage hierarchy: identification and causal credibility (Agent 3, Agent 6) > statistical plan, power, and multiple testing (Agent 4) > internal inconsistencies and outcome coverage gaps (Agent 2) > data, sample, and implementation risks (Agent 5) > clarity and pre-specification completeness (Agent 1). Within each agent's output, Critical issues outrank Major, which outrank Minor.
 
 **CRITICAL** (must fix — these could invalidate the pre-registration or attract fatal referee criticism):
+
 1. ...
 2. ...
 3. ...
 
-**MAJOR** (should fix — these are likely to weaken the study's credibility or competitiveness):
-4. ...
-5. ...
-6. ...
-7. ...
+**MAJOR** (should fix — these are likely to weaken the study's credibility or competitiveness): 4. ... 5. ... 6. ... 7. ...
 
-**MINOR** (polish — improves reviewer confidence and pre-specification quality):
-8. ...
-9. ...
-10. ...
+**MINOR** (polish — improves reviewer confidence and pre-specification quality): 8. ... 9. ... 10. ...
 
 ---
 
 ## Adversarial Referee Review & Registration Recommendation
 
 [Agent 6 output]
-
-
 
 ---
 
@@ -493,11 +511,13 @@ The following issues require attention before registration, ordered by priority.
 [Agent 1 output, preserving its structure]
 
 ---
-
 ```
 
 After saving, report to the user:
+
 1. The path to the saved report
 2. The preliminary recommendation from Agent 6
 3. The top 5 priority action items
 4. How many issues were flagged in each category (counts)
+
+If `CREATED_REVIEW_INPUT = true` for this run, delete `_review_input.txt`.

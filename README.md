@@ -1,6 +1,6 @@
 # Using AI to get feedback on your research
 
-A collection of [Claude Code](https://claude.ai/code) skills for academic research review. This tool was developed by [Claes Bäckman](https://claesbackman.com).
+A collection of [Claude Code](https://claude.ai/code) skills for academic research review. Originally developed by [Claes Bäckman](https://claesbackman.com). Adapted for psychology and neuroscience by [Valentin Guigon](https://valentinguigon.substack.com).
 
 
 ## Skills in this folder
@@ -24,7 +24,7 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 |---|---|
 | 1 | Spelling, grammar, and academic style |
 | 2 | Internal consistency and cross-reference verification |
-| 3 | Unsupported claims and identification integrity |
+| 3 | Unsupported claims and experimental design integrity |
 | 4 | Mathematics, equations, and notation |
 | 5 | Tables, figures, and their documentation |
 | 6 | Contribution evaluation (adversarial journal-specific referee) |
@@ -33,33 +33,35 @@ Runs a rigorous pre-submission review of an academic paper, simulating the scrut
 
 ```bash
 curl -o ~/.claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-paper.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-paper.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-paper.md
 ```
 
 **Usage:**
 
 ```text
 /review-paper
-/review-paper QJE
-/review-paper JF path/to/main.tex
+/review-paper PsychSci
+/review-paper NatureNeuro path/to/paper.docx
 ```
 
 **Supported journals:**
 
 | Category | Journals |
 |---|---|
-| Top-5 economics | `AER`, `QJE`, `JPE`, `Econometrica`, `REStud` |
-| Finance | `JF`, `JFE`, `RFS`, `JFQA` |
-| Macro | `AEJMacro`, `JME`, `RED` |
+| Top-tier neuroscience | `NatureNeuro`, `Neuron`, `eLife`, `CurrBiol` |
+| Broad science / Nature family | `NatureHB`, `PNAS` |
+| Cognitive and behavioral | `PsychSci`, `JNeurosci` |
+| Neuroimaging | `NeuroImage`, `CerebCortex` |
+| Computational / open science | `PLoSCB`, `PLoSOne`, `CommsPsych` |
 
-If no journal is specified, the command applies high general standards without a specific journal persona. If no path is provided, it auto-detects the main `.tex` file.
+If no journal is specified, the command applies high general standards without a specific journal persona. If no path is provided, it auto-detects the paper in this priority order: `.tex`  `.md`  `.pdf`  `.docx`.
 
 **Output:**
 
@@ -74,31 +76,31 @@ Saves a consolidated report to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the cu
 **Requirements:**
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper. The skill reads `.tex` files and optionally inspects figure and table files.
+- A paper in `.tex`, `.md`, `.pdf`, or `.docx` format. For `.pdf`, `pdftotext` (poppler-utils) or `pypdf` must be installed. For `.docx`, `pandoc` must be installed.
 
 ### `review-paper-light` — Quick Paper Check
 
-Runs a fast 2-agent pre-submission check for an economics paper. It focuses on contribution, identification, causal overclaiming, and unsupported claims, and is designed for quick iteration before a full review.
+Runs a fast 2-agent pre-submission check for a psychology or neuroscience paper. It focuses on contribution, design credibility, causal overclaiming, and unsupported claims, and is designed for quick iteration before a full review.
 
 **Installation:**
 
 ```bash
 curl -o ~/.claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-paper-light.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-paper-light.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-paper-light.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-paper-light.md
 ```
 
 **Usage:**
 
 ```text
 /review-paper-light
-/review-paper-light path/to/main.tex
+/review-paper-light path/to/paper
 ```
 
 If no path is provided, the command auto-detects the main `.tex` file.
@@ -110,7 +112,7 @@ Saves a short prioritized report to `QUICK_REVIEW_[YYYY-MM-DD].md` in the curren
 **Requirements:**
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper.
+- A paper in `.tex`, `.md`, `.pdf`, or `.docx` format (same extraction dependencies as `review-paper`).
 
 ### `review-paper-code` — Paper-Code Reproducibility Review
 
@@ -120,19 +122,19 @@ Runs a paper-code review for empirical research projects. It discovers the main 
 
 | Area | Focus |
 |---|---|
-| Paper discovery | Main `.tex` file and included sections |
-| Code discovery | Stata, R, and Python scripts in common analysis folders |
+| Paper discovery | Paper in `.tex`, `.md`, `.pdf`, or `.docx` format |
+| Code discovery | Python, R, MATLAB, notebooks, shell scripts, and BIDS pipeline files |
 | Reproducibility | Paths, seeds, outputs, dependencies, run order, documentation |
 | Code quality | Structure, commented-out code, opaque transforms, major thresholds |
-| Paper-code alignment | Tables, variables, sample restrictions, methods, clustering, fixed effects |
+| Paper-code alignment | Tables, variables, contrasts/conditions, methods, BIDS stats model, computational model alignment |
 
 **Usage:**
 
 ```text
 /review-paper-code
-/review-paper-code path/to/main.tex
-/review-paper-code path/to/main.tex path/to/code_dir
-/review-paper-code path/to/main.tex path/to/code_dir full
+/review-paper-code path/to/paper
+/review-paper-code path/to/paper path/to/code_dir
+/review-paper-code path/to/paper path/to/code_dir full
 ```
 
 **Review depth:**
@@ -147,7 +149,7 @@ Writes a report to `code_review_report.md` in the current working directory.
 **Requirements:**
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A LaTeX paper plus Stata, R, or Python analysis code.
+- A paper in any supported format plus Python, R, MATLAB, notebook, or BIDS pipeline code (same extraction dependencies as `review-paper`).
 
 ### `review-pap` — Pre-Analysis Plan Review
 
@@ -157,28 +159,28 @@ Runs a 6-agent pre-submission review of a pre-analysis plan (PAP). The command a
 
 ```bash
 curl -o ~/.claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-pap.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-pap.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-pap.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-pap.md
 ```
 
 **Usage:**
 
 ```text
 /review-pap
-/review-pap AEA
-/review-pap QJE path/to/pap.tex
+/review-pap OSF
+/review-pap PsychSci path/to/pap.docx
 ```
 
 **Supported targets:**
 
-- Trial registries: `AEA`, `EGAP`, `OSF`, `ClinicalTrials`, `ISRCTN`
-- Journal standards: `AER`, `QJE`, `JPE`, `RESTUD`, `AEJ`, `JEEA`
+- Trial registries: `OSF`, `AsPredicted`, `ClinicalTrials`, `ISRCTN`
+- Journal standards: `PsychSci`, `JNeurosci`, `NatureNeuro`, `eLife`, `NatureHB`, `PNAS`, `NeuroImage`, `CommsPsych`, `PLoSCB`
 - General standards: `top-journal`, `working-paper`
 
 If no target is specified, the command defaults to `top-journal`. If no path is provided, it auto-detects the main PAP file.
@@ -198,7 +200,7 @@ Saves a consolidated report to `PAP_REVIEW_[YYYY-MM-DD].md` in the current direc
 **Requirements:**
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A PAP in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
+- A PAP in `.md`, `.txt`, `.tex`, `.pdf`, or `.docx` format. `.pdf` and `.docx` inputs are extracted automatically (same dependencies as `review-paper`).
 
 ### `review-grant` — Grant Proposal Review
 
@@ -208,14 +210,14 @@ Runs a 6-agent pre-submission panel review of a grant proposal. The command auto
 
 ```bash
 curl -o ~/.claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-grant.md
 ```
 
 For a project-local install:
 
 ```bash
 mkdir -p .claude/commands && curl -o .claude/commands/review-grant.md \
-  https://raw.githubusercontent.com/claesbackman/AI-research-feedback/main/Paper-review/review-grant.md
+  https://raw.githubusercontent.com/ValentinGuigon/AI-research-feedback/main/Skills/review-grant.md
 ```
 
 **Usage:**
@@ -248,7 +250,7 @@ Saves a consolidated report to `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` in the cu
 **Requirements:**
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with access to the `general-purpose` subagent.
-- A proposal in a readable format such as `.md`, `.txt`, or `.tex`. The skill can also attempt to work with `.pdf` and `.docx`, while noting accessibility limitations if needed.
+- A proposal in `.md`, `.txt`, `.tex`, `.pdf`, or `.docx` format. `.pdf` and `.docx` inputs are extracted automatically (same dependencies as `review-paper`).
 
 ## License
 
