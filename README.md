@@ -3,6 +3,8 @@
 A collection of [Claude Code](https://claude.ai/code) skills for academic research review. Originally developed by [Claes Bäckman](https://claesbackman.com). Adapted for psychology and neuroscience by [Valentin Guigon](https://valentinguigon.substack.com).
 
 
+This repository is primarily Claude Code-oriented. There are currently two Codex-native pilots, `review-paper` at `.codex/skills/review-paper/` and `review-paper-light` at `.codex/skills/review-paper-light/`; both have been validated on real paper inputs, and the other workflows remain Claude-oriented for now.
+
 ## Skills in this folder
 
 - `Skills/review-paper.md`: Full referee-style paper review command.
@@ -81,6 +83,8 @@ Saves a consolidated report to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the cu
 ### `review-paper-light` — Quick Paper Check
 
 Runs a fast 2-agent pre-submission check for a psychology or neuroscience paper. It focuses on contribution, design credibility, causal overclaiming, and unsupported claims, and is designed for quick iteration before a full review.
+
+Codex pilot note: this workflow is piloted natively in Codex via `.codex/skills/review-paper-light/`. The repository also includes a Codex-native `review-paper` pilot at `.codex/skills/review-paper/`. Both pilots have been validated on real paper inputs. The main repository workflow documentation remains Claude Code-oriented.
 
 **Installation:**
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Paper Light"
+  short_description: "Fast paper review for contribution and causal claims"
+  default_prompt: "Use $review-paper-light to run a quick pre-submission review of my psychology or neuroscience paper."

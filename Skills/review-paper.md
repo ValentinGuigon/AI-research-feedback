@@ -22,6 +22,16 @@ Store the resolved target journal as `TARGET_JOURNAL` for use in Agent 6 and the
 
 After parsing the journal name and file path, detect the paper format and set `INPUT_MODE` plus a cleanup flag `CREATED_REVIEW_INPUT = false`.
 
+Also initialize:
+- `MAIN_PAPER_PATH = ""`
+- `DIRECT_REVIEW_INPUTS = []`
+- `SUPPLEMENTARY_FILES = []`
+- `REVIEWER_COMMENT_FILES = []`
+- `EXTRACTED_TEXT_COMPANIONS = []`
+- `CALIBRATION_ONLY_FILES = []`
+- `DISCOVERED_BUT_UNREAD_FILES = []`
+- `REVIEWED_MATERIALS_NOTE = ""`
+
 If a file path was provided:
 
 1. Detect the extension: `.tex`, `.md`, `.pdf`, or `.docx`.
@@ -87,9 +97,39 @@ If the resolved input is `.docx`, set `INPUT_MODE = "plain"` and:
 5. Use the same image Glob as the `.md` path and record those paths as figure paths.
 6. Set table paths to empty.
 
+For any non-LaTeX main input (`.md`, `.pdf`, `.docx`), after resolving the main paper and creating `_review_input.txt` if needed, run a conservative companion-file discovery pass:
+
+1. Set `MAIN_PAPER_PATH` to the resolved main paper path and add `_review_input.txt` to `DIRECT_REVIEW_INPUTS`.
+2. Search first in the main paper's directory. If needed, inspect only obvious neighboring locations: immediate child directories whose names include `supp`, `supplement`, `review`, `peer`, `referee`, `rebuttal`, or `response`.
+3. Consider only candidate files with extensions `.txt`, `.md`, `.pdf`, or `.docx`.
+4. Normalize candidate filenames to lowercase and classify them conservatively using these signals:
+   - supplementary materials / supplement / supplementary methods: `sup`, `supp`, `supplement`, `suppmat`, `supplementary`, `appendix`, `esm`, `moesm`
+   - peer review / reviewer comments / referee reports / rebuttal / response to reviewers: `peer_review`, `peer review`, `reviewer`, `referee`, `rebuttal`, `response`, `response-to-reviewers`
+   - extracted plain-text companions related to the paper: a nearby `.txt` file that clearly shares the paper stem or article identifier
+5. Include a candidate only if it plausibly belongs to the same paper package. Prefer false negatives over sweeping in unrelated repository files.
+6. Classify discovered files into:
+   - `SUPPLEMENTARY_FILES`
+   - `REVIEWER_COMMENT_FILES`
+   - `EXTRACTED_TEXT_COMPANIONS`
+7. Use companion files this way:
+   - add `SUPPLEMENTARY_FILES` to `DIRECT_REVIEW_INPUTS` and read them as part of the evidence base
+   - keep `REVIEWER_COMMENT_FILES` in `CALIBRATION_ONLY_FILES`; read them for calibration/context only, not as the primary evidence base
+   - for `EXTRACTED_TEXT_COMPANIONS`, use judgment:
+     - if they duplicate the main paper extraction, treat them as contextual cross-check material
+     - if they are clearly the best available extracted text for the same paper, add them to `DIRECT_REVIEW_INPUTS`
+     - otherwise keep them as contextual material and record that choice
+   - for discovered companion files that are plausibly part of the same paper package but are not actually read in this run, add them to `DISCOVERED_BUT_UNREAD_FILES`
+8. Build `REVIEWED_MATERIALS_NOTE` summarizing:
+   - main paper path
+   - supplementary file paths, if any
+   - reviewer-comment file paths, if any
+   - extracted text companion paths, if any
+   - which materials are treated as direct review inputs versus calibration/context only
+   - which discovered files were not read directly in this run
+
 Record:
 - If `INPUT_MODE = "latex"`: full path of each `.tex` file and its role in the paper
-- If `INPUT_MODE = "plain"`: the single content file path to review (`_review_input.txt`)
+- If `INPUT_MODE = "plain"`: the main extracted content file path (`_review_input.txt`) plus any discovered companion file paths and their classification
 - List of figure file paths
 - List of table file paths
 - The paper title, authors, and abstract (from the main `.tex` file for LaTeX inputs, or best-effort from the plain/extracted text for non-LaTeX inputs)
@@ -98,9 +138,22 @@ Record:
 
 **If `INPUT_MODE = "latex"` and zero table files are found**, warn the user: "No table .tex files were found in standard locations. Tables may be stored in an `output/` or non-standard directory. Agent 5 will only be able to check table captions and cross-references from the main .tex files."
 
+For `INPUT_MODE = "plain"`, plain-mode agent handoffs must also include companion-material context:
+- pass `SUPPLEMENTARY_FILES` as direct-evidence materials
+- pass `REVIEWER_COMMENT_FILES` as calibration/context materials only
+- pass any `EXTRACTED_TEXT_COMPANIONS` either as direct review inputs or as contextual cross-check materials, according to the classification decided in Phase 1
+- add `REVIEWED_MATERIALS_NOTE` near the top of every plain-mode prompt
+- instruct agents that supplementary materials are part of the evidence base for robustness checks, supplementary tables/figures references, measurement reliability, extra methods, and wave/control analyses
+- instruct agents that reviewer comments are calibration/context only, must not dictate the review, and should be used only to assess whether major reviewer-raised concerns are independently supported, contradicted, or resolved by the manuscript and supplement
+
 ## Phase 2: Launch 6 Review Agents in Parallel
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. If `INPUT_MODE = "latex"`, pass the complete list of `.tex` file paths, figure paths, and table paths to each agent in its prompt. If `INPUT_MODE = "plain"`, pass `_review_input.txt` as the single content file, along with figure paths and empty table paths as applicable. In each agent prompt where `[LIST ALL TEX FILE PATHS HERE]` appears, fill that placeholder as follows: if `INPUT_MODE = "latex"`, use the existing behavior; if `INPUT_MODE = "plain"`, replace the placeholder instruction with: "The paper has been extracted to `_review_input.txt`. Read that file as the full paper content. There are no separate component files." When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt — leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
+In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. If `INPUT_MODE = "latex"`, pass the complete list of `.tex` file paths, figure paths, and table paths to each agent in its prompt. If `INPUT_MODE = "plain"`, pass `_review_input.txt` as the main content file, along with `SUPPLEMENTARY_FILES` as direct-evidence materials, `REVIEWER_COMMENT_FILES` as calibration/context materials only, any `EXTRACTED_TEXT_COMPANIONS` according to their Phase 1 classification, and figure paths plus empty table paths as applicable. Add `REVIEWED_MATERIALS_NOTE` near the top of every plain-mode prompt. In each agent prompt where `[LIST ALL TEX FILE PATHS HERE]` appears, fill that placeholder as follows: if `INPUT_MODE = "latex"`, use the existing behavior; if `INPUT_MODE = "plain"`, replace the placeholder instruction with: "The paper has been extracted to `_review_input.txt`. Read that file as the main paper content. Also read any listed supplementary files as direct evidence. If reviewer-comment files are provided, use them only for calibration/context: check whether major reviewer-raised concerns are independently supported, contradicted, or resolved by the manuscript and supplement. Do not let reviewer comments dictate the review, and do not turn your output into a reviewer-comment summary." When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt; leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
+
+For all plain-mode agents, add these instructions near the top of the prompt:
+- "Supplementary materials are part of the evidence base. Use them to verify robustness claims, supplementary tables/figures references, measurement reliability, extra methods, and wave/control analyses."
+- "Reviewer comments are calibration/context only. Distinguish issues identified independently from issues corroborated by reviewer comments, and identify reviewer-specific concerns that are not clearly resolved by the available materials."
+- "Do not let reviewer comments dictate the review, and do not turn your output into a reviewer-comment summary."
 
 ---
 
@@ -510,7 +563,19 @@ where `[YYYY-MM-DD]` is today's date.
 **Paper**: [Title]
 **Authors**: [Authors]
 **Date**: [Today's date]
-**Review Standard**: [TARGET_JOURNAL — if top-field, write "Leading Field Journal"; otherwise write the specific journal name]
+**Review Standard**: [TARGET_JOURNAL - if top-field, write "Leading Field Journal"; otherwise write the specific journal name]
+
+---
+
+## Reviewed Materials
+
+- Main paper: [main paper path]
+- Direct review inputs: [list `_review_input.txt` and any supplementary or extracted-text companion files used as evidence]
+- Calibration/context only: [list reviewer-comment files and any contextual-only extracted text companions, or "None"]
+- Discovered but unread: [list companion files detected but not read directly in this run, or "None"]
+- Supplementary files discovered: [list paths or "None"]
+- Reviewer-comment files discovered: [list paths or "None"]
+- Note: reviewer comments were used only to calibrate the review and check whether major concerns were independently supported, contradicted, or resolved by the manuscript/supplement. Any file listed under `Discovered but unread` was detected conservatively but not used as direct evidence in this report.
 
 ---
 
@@ -525,6 +590,13 @@ where `[YYYY-MM-DD]` is today's date.
 ## 1. Contribution & Referee Assessment
 
 [Agent 6 output]
+
+When `INPUT_MODE = "plain"` and reviewer comments were available, append a short subsection titled `### Reviewer Calibration` with exactly three bullets:
+- `Independently corroborated concerns`: reviewer concerns also supported by the manuscript/supplement review
+- `Resolved or weakened reviewer concerns`: reviewer concerns contradicted or substantially weakened by the available manuscript/supplement materials
+- `Reviewer-specific unresolved concerns`: reviewer concerns not clearly resolvable from the available materials
+
+Keep this subsection brief and analytical. Do not summarize the reviewer file wholesale.
 
 ---
 
@@ -584,5 +656,7 @@ After saving, report to the user:
 2. The preliminary recommendation from Agent 6
 3. The top 5 priority action items
 4. How many issues were flagged in each category (counts)
+5. Which companion files were discovered and whether they were used as direct review inputs, as calibration/context only, or discovered but unread
 
 If `CREATED_REVIEW_INPUT = true` for this run, delete `_review_input.txt` after saving the report.
+
