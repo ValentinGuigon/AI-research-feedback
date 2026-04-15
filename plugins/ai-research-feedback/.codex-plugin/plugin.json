@@ -1,0 +1,38 @@
+{
+  "name": "ai-research-feedback",
+  "version": "0.1.0",
+  "description": "Academic research review skills derived from canonical workflow markdown.",
+  "author": {
+    "name": "Valentin Guigon",
+    "url": "https://valentinguigon.substack.com"
+  },
+  "homepage": "https://github.com/ValentinGuigon/AI-research-feedback",
+  "repository": "https://github.com/ValentinGuigon/AI-research-feedback",
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "review",
+    "claude",
+    "codex",
+    "psychology",
+    "neuroscience"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AI Research Feedback",
+    "shortDescription": "Academic review workflows for papers and PAPs.",
+    "longDescription": "Thin Codex plugin packaging for canonical academic review workflows authored in Skills/*.md.",
+    "developerName": "Valentin Guigon",
+    "category": "Productivity",
+    "capabilities": [
+      "Write"
+    ],
+    "websiteURL": "https://github.com/ValentinGuigon/AI-research-feedback",
+    "defaultPrompt": [
+      "Review my paper for journal fit and major weaknesses.",
+      "Run a quick paper check before submission.",
+      "Review my pre-analysis plan before registration."
+    ],
+    "brandColor": "#1F6F5E"
+  }
+}

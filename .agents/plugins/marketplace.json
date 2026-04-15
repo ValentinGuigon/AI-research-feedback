@@ -1,0 +1,20 @@
+{
+  "name": "ai-research-feedback-local",
+  "interface": {
+    "displayName": "AI Research Feedback Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "ai-research-feedback",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ai-research-feedback"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

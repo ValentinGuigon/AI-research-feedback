@@ -3,9 +3,47 @@
 A collection of [Claude Code](https://claude.ai/code) skills for academic research review. Originally developed by [Claes Bäckman](https://claesbackman.com). Adapted for psychology and neuroscience by [Valentin Guigon](https://valentinguigon.substack.com).
 
 
-This repository is primarily Claude Code-oriented. There are currently two Codex-native pilots, `review-paper` at `.codex/skills/review-paper/` and `review-paper-light` at `.codex/skills/review-paper-light/`; both have been validated on real paper inputs, and the other workflows remain Claude-oriented for now.
+The canonical authored workflows live under `Skills/`.
 
-## Skills in this folder
+This repository also ships a Codex plugin package at `plugins/ai-research-feedback/`. That package is the Codex-facing install surface, and its bundled skill payloads are derived from `Skills/` rather than authored separately.
+
+To keep those surfaces in sync:
+
+- `scripts/derive_codex_plugin_skills.py` copies the canonical skills from `Skills/` into `plugins/ai-research-feedback/skills/`
+- `.github/workflows/derive-codex-plugin-skills.yml` runs that derivation on push
+- `.agents/plugins/marketplace.json` exposes the local plugin to Codex as a repo-scoped marketplace
+
+## Using These Workflows
+
+There are two supported ways to use this repository today:
+
+1. Claude Code skills
+   Install individual markdown commands from `Skills/*.md` into `~/.claude/commands/` or `.claude/commands/`.
+2. Codex plugin
+   Use the packaged plugin under `plugins/ai-research-feedback/` through a Codex marketplace.
+
+### Codex Plugin Notes
+
+Codex plugins are not installed by dropping a bare `SKILL.md` file into `~/.agents/`. In the Codex plugin model, `~/.agents/plugins/marketplace.json` is a personal marketplace file, and `$REPO_ROOT/.agents/plugins/marketplace.json` is a repo marketplace file. Those marketplace entries point Codex at a plugin folder that contains `.codex-plugin/plugin.json` plus bundled `skills/`.
+
+For this repo:
+
+- repo-scoped marketplace file: `.agents/plugins/marketplace.json`
+- plugin package root: `plugins/ai-research-feedback/`
+- plugin manifest: `plugins/ai-research-feedback/.codex-plugin/plugin.json`
+
+If you want the plugin available outside this repo, the Codex docs describe a personal-marketplace pattern using:
+
+- `~/.agents/plugins/marketplace.json`
+- a local plugin directory, commonly `~/.codex/plugins/<plugin-name>/`
+
+So the short version is:
+
+- `curl -o ~/.claude/commands/...` makes sense for Claude commands
+- `curl -o ~/.agents/plugins/marketplace.json ...` can make sense for Codex marketplace setup
+- `~/.agents/` is marketplace wiring, not the place where the skill instructions themselves live
+
+## Maintained Skills
 
 - `Skills/review-paper.md`: Full referee-style paper review command.
 - `Skills/review-paper-light.md`: Fast 2-agent paper check.
@@ -83,8 +121,6 @@ Saves a consolidated report to `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` in the cu
 ### `review-paper-light` — Quick Paper Check
 
 Runs a fast 2-agent pre-submission check for a psychology or neuroscience paper. It focuses on contribution, design credibility, causal overclaiming, and unsupported claims, and is designed for quick iteration before a full review.
-
-Codex pilot note: this workflow is piloted natively in Codex via `.codex/skills/review-paper-light/`. The repository also includes a Codex-native `review-paper` pilot at `.codex/skills/review-paper/`. Both pilots have been validated on real paper inputs. The main repository workflow documentation remains Claude Code-oriented.
 
 **Installation:**
 
