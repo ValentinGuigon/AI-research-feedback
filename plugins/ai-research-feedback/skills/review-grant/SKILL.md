@@ -1,28 +1,132 @@
 ---
-description: Run a 6-agent pre-submission panel review for a grant proposal targeting a specified funder or program
+description: Run a grant proposal review using a sponsor archetype, optional call-specific grant profile, and optional saved review plan
 ---
 
-You are coordinating a rigorous pre-submission review of a grant proposal. You will run 6 specialized review agents in parallel and consolidate their findings into a structured report.
+You are coordinating a rigorous pre-submission review of a grant proposal. You will use a saved review plan when available so the reviewer panel matches the grant's likely evaluator mix instead of assuming one fixed panel.
 
-## Phase 1: Parse Arguments and Discover the Proposal
+## Goal
+
+Review the proposal against:
+
+- a base sponsor archetype
+- plus, when available, a call-specific grant profile cached locally
+- plus, when available, a saved review plan that specifies the expert lenses to run
+
+The sponsor archetype provides the stable reviewer persona. The call-specific profile provides the exact priorities, constraints, review criteria, and required components for one grant opportunity.
+The review plan provides the grant-specific reviewer panel and any organization-specific overlays.
+
+## Phase 1: Parse Arguments
 
 Parse `$ARGUMENTS` as follows:
-- The recognized target programs/funders are:
-  - **US federal science and health**: `NSF`, `NIH`
-  - **International research funders**: `ERC`, `HorizonEurope`
-  - **General proposal standards**: `major-funder`, `foundation`
-  - (case-insensitive; users can add further programs or funders by editing this list in the skill file)
-- If the first token of `$ARGUMENTS` matches one of these names, treat it as the **target program/funder** and treat any remaining text as the **main proposal file path**.
-- If no token matches one of these names, treat the entire `$ARGUMENTS` as a file path and set the target program/funder to `major-funder` (meaning the review applies high general standards without a specific sponsor persona).
-- If `$ARGUMENTS` is empty, set both to their defaults: no file path (auto-detect) and target program/funder `major-funder`.
 
-Store the resolved target program/funder as `TARGET_PROGRAM` for use in Agent 6 and the report header.
+- Recognized built-in sponsor archetypes:
+  - `NSF`
+  - `NIH`
+  - `ERC`
+  - `HorizonEurope`
+  - `major-funder`
+  - `foundation`
+- Optional review-plan arguments:
+  - `plan=<path>`
+  - `review-plan=<path>`
+- Optional grant-profile arguments:
+  - `profile=<path>`
+  - `grant-profile=<path>`
+- Optional shorthand grant-profile path:
+  - if a token ends in `profile.json`, treat it as a profile path
+- Optional shorthand review-plan path:
+  - if a token ends in `review-plan.json`, treat it as a review-plan path
+- Remaining text is the proposal path
+
+Resolution rules:
+
+1. If the first token matches a built-in sponsor archetype, treat it as the requested base review mode.
+2. If a profile path is provided, read it and treat it as the source of call-specific context.
+3. If the profile contains `base_funder_mode`, use that as the effective reviewer persona unless the user explicitly provided a built-in sponsor archetype; if both are present and they differ, prefer the explicit user argument but record the mismatch in the final report assumptions.
+4. If neither a built-in sponsor archetype nor a profile path is provided, default to `major-funder`.
+5. If no proposal path is provided, auto-detect it.
+
+Store:
+
+- `REQUESTED_TARGET_PROGRAM`
+- `GRANT_PROFILE_PATH`
+- `REVIEW_PLAN_PATH`
+- `EFFECTIVE_TARGET_PROGRAM`
+
+## Phase 2: Load Call-Specific Grant Profile When Present
+
+If `GRANT_PROFILE_PATH` is set:
+
+1. Read the JSON file.
+2. Validate that it appears to match the schema at `templates/grants/profile.schema.json` when that file exists; otherwise validate the profile by checking for the required fields listed below.
+3. Record at minimum:
+   - `grant_name`
+   - `sponsor`
+   - `program_name`
+   - `base_funder_mode`
+   - `deadline`
+   - `required_documents`
+   - `budget_rules`
+   - `review_criteria`
+   - `program_priorities`
+   - `language_to_mirror`
+   - `risks_and_ambiguities`
+   - `reviewer_brief`
+   - `manual_review_required`
+4. If `sources.md` exists next to the profile, read it as supporting provenance.
+5. Build a concise `CALL_PROFILE_CONTEXT` block that summarizes the profile for downstream reviewers.
+
+If no profile is provided:
+
+- set `CALL_PROFILE_CONTEXT` to a short note saying that no call-specific profile was supplied and the review should rely on the built-in sponsor archetype plus the proposal materials alone
+
+## Phase 2.5: Load Review Plan When Present
+
+If `REVIEW_PLAN_PATH` is set:
+
+1. Read the JSON file.
+2. Validate it against `templates/grants/review-plan.schema.json` when that file exists. At minimum verify:
+   - all top-level required fields are present
+   - `panel_selection` is a non-empty array
+   - every `panel_selection` entry contains:
+     - `lens_id`
+     - `label`
+     - `status`
+     - `rationale`
+     - `priority`
+     - `core_questions`
+3. Record:
+   - `planning_mode`
+   - `panel_selection`
+   - `uncertainties`
+   - `confirmation`
+   - `proposal_path`
+   - `grant_profile_path`
+   - `expert_registry_path`
+4. Build `SELECTED_PLAN_LENSES` by keeping only `panel_selection` entries whose `status` is `selected`.
+5. Keep the selected lenses in plan order. Do not silently re-expand the panel to a historical default count.
+6. If `SELECTED_PLAN_LENSES` is empty, stop and report that the supplied plan selected no executable review lenses.
+7. If `expert_registry_path` exists, read it and collect overlay adaptation notes for any selected `organization_overlay_ids`. If it is missing or cannot be parsed, continue with the saved overlay ids alone rather than guessing new overlays.
+8. Build a concise `REVIEW_PLAN_CONTEXT` block summarizing:
+   - planning mode
+   - selected primary lenses
+   - selected secondary lenses
+   - optional or excluded lenses that were not launched
+   - any organization-specific overlays attached to selected lenses
+   - whether confirmation had been required
+
+If no review plan is provided:
+
+- set `REVIEW_PLAN_CONTEXT` to a short note saying that no saved plan was supplied and the workflow should fall back to a default standing panel
+- set `SELECTED_PLAN_LENSES` to an empty list
+
+## Phase 3: Discover the Proposal
 
 If a file path was provided, use it as the main proposal file. Otherwise, auto-detect:
 
 1. Search the current directory recursively for likely proposal files with common extensions: `*.md`, `*.txt`, `*.tex`, `*.docx`, `*.pdf` (exclude hidden folders, `.git`, build output, and dependency directories).
 2. Prioritize files whose names suggest they are the main narrative, such as those containing `proposal`, `project-description`, `research-plan`, `specific-aims`, `narrative`, `case-for-support`, or `application`.
-3. Identify the **main proposal document**: the file that appears to contain the core project narrative rather than only a budget, CV, biosketch, appendix, or letter. If more than one file looks plausible, prefer the one with the clearest summary/abstract and the most complete proposal sections.
+3. Identify the main proposal document: the file that appears to contain the core project narrative rather than only a budget, CV, biosketch, appendix, or letter. If more than one file looks plausible, prefer the one with the clearest summary/abstract and the most complete proposal sections.
 4. Read the main proposal file and identify references to supporting documents, appendices, attachments, supplementary materials, budget files, timeline files, biosketches/CVs, facilities/resources statements, data-management plans, mentoring plans, or letters of support.
 5. Search recursively for common supporting files and record them if present:
    - Budget and justification: files containing `budget`, `justification`
@@ -31,364 +135,223 @@ If a file path was provided, use it as the main proposal file. Otherwise, auto-d
    - Compliance/supporting plans: files containing `data-management`, `data sharing`, `management plan`, `mentoring`, `facilities`, `resources`, `support letter`, `letter`
    - Appendices and supplements: files containing `appendix`, `supplement`, `supplementary`
 6. Record:
-   - Full path of the main proposal file
-   - Full path of each supporting file and its likely role
-   - Proposal title, PI(s)/team, abstract/summary if available
-   - Any explicit funding call, solicitation, or sponsor named in the materials
+   - full path of the main proposal file
+   - full path of each supporting file and its likely role
+   - proposal title, PI(s)/team, abstract/summary if available
+   - any explicit funding call, solicitation, or sponsor named in the materials
 
 Set `CREATED_REVIEW_INPUT = false`.
 
 If the resolved file is `.tex`, `.txt`, or `.md`:
-- Set `INPUT_MODE = "plain-direct"`. Read directly. Do not create `_review_input.txt`.
+
+- set `INPUT_MODE = "plain-direct"`
+- read directly
+- do not create `_review_input.txt`
 
 If the resolved file is `.pdf`:
-- Set `INPUT_MODE = "plain"`.
-- Run: `pdftotext -layout "<path>" _review_input.txt`
-- Fallback: `python3 -c "import pypdf; r=pypdf.PdfReader('<path>'); open('_review_input.txt','w').write('\n'.join(p.extract_text() for p in r.pages))"`
-- If both fail, halt with install instructions for pdftotext (poppler-utils) or pypdf.
-- Set `CREATED_REVIEW_INPUT = true`.
+
+- set `INPUT_MODE = "plain"`
+- run: `pdftotext -layout "<path>" _review_input.txt`
+- fallback: `python3 -c "import pypdf; r=pypdf.PdfReader('<path>'); open('_review_input.txt','w').write('\n'.join(p.extract_text() for p in r.pages))"`
+- if both fail, halt with install instructions for pdftotext (poppler-utils) or pypdf
+- set `CREATED_REVIEW_INPUT = true`
 
 If the resolved file is `.docx`:
-- Set `INPUT_MODE = "plain"`.
-- Run: `pandoc "<path>" -t plain -o _review_input.txt`
-- If pandoc unavailable, halt with install instructions.
-- Set `CREATED_REVIEW_INPUT = true`.
 
-## Phase 2: Launch 6 Review Agents in Parallel
+- set `INPUT_MODE = "plain"`
+- run: `pandoc "<path>" -t plain -o _review_input.txt`
+- if pandoc unavailable, halt with install instructions
+- set `CREATED_REVIEW_INPUT = true`
 
-In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the proposal materials independently. Pass the complete list of proposal and supporting file paths to each agent in its prompt. When passing the proposal file path to agents: if `INPUT_MODE = "plain"`, substitute `_review_input.txt` for the main proposal file path in each agent's file list. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_PROGRAM` for every occurrence of `TARGET_PROGRAM` in that agent's prompt text.
+## Phase 4: Build Shared Review Context
 
----
+Construct a shared review context block for all agents containing:
 
-### AGENT 1 — Clarity, Writing Quality & Compliance Signals
+- `EFFECTIVE_TARGET_PROGRAM`
+- whether a call-specific profile was provided
+- `GRANT_PROFILE_PATH` if present
+- proposal title
+- PI(s)/team
+- explicit funding call or sponsor named in the proposal materials
+- `CALL_PROFILE_CONTEXT`
+- `REVIEW_PLAN_CONTEXT`
+- any profile freshness or ambiguity warnings
+
+When passing the proposal file path to agents:
+
+- if `INPUT_MODE = "plain"`, substitute `_review_input.txt` for the main proposal file path
+- otherwise use the original proposal file path
 
-You are a grant editor reviewing the proposal for clarity, professionalism, and compliance with common proposal-writing expectations. Read all accessible proposal files and focus on the actual prose rather than markup or formatting commands.
+Pass the complete list of proposal and supporting file paths to every agent.
 
-**What to check:**
+## Phase 4.5: Resolve Report Output Path
 
-1. **Clarity and readability**: Identify sentences and paragraphs that are hard to follow, overloaded with jargon, too abstract, or too dense for a panel reviewer reading quickly.
+Before launching agents, resolve a deterministic output directory and filename.
 
-2. **Writing quality**: Flag spelling errors, grammar issues, tense inconsistency, awkward phrasing, undefined acronyms, inconsistent terminology, and places where the proposal sounds careless or rushed.
+Directory rules:
 
-3. **Structure and signposting**: Check whether the proposal clearly states:
-   - the problem
-   - why it matters
-   - the core aims or objectives
-   - the approach
-   - expected outputs or outcomes
-   - why this team can do it
+- If `GRANT_PROFILE_PATH` is present, save the report in the same directory as that `profile.json`.
+- Otherwise, save the report under `review/`.
+
+Filename rules:
+
+- Derive `PROPOSAL_SLUG` from the main proposal filename:
+  - lowercase
+  - letters, numbers, and hyphens only
+  - remove the original extension
+- Base filename:
+  - `grant-review--<PROPOSAL_SLUG>--[YYYY-MM-DD].md`
+- If that filename already exists in the target directory, append `-v2`, `-v3`, and so on.
+
+Store the final absolute report path as `REPORT_OUTPUT_PATH`.
 
-4. **Reviewer-orientation problems**: Flag any place where a busy reviewer would ask:
-   - "What exactly is the project trying to do?"
-   - "Why is this important?"
-   - "What is new here?"
-   - "What will be delivered, and when?"
+## Phase 5: Resolve The Executed Review Panel
 
-5. **Compliance signals**: Check for common proposal-writing failures that create noncompliance risk even when rules are not fully provided:
-   - missing project summary or abstract-like overview
-   - unclear aims/objectives
-   - no explicit deliverables
-   - no timeline cues
-   - no evaluation or success criteria
-   - vague dissemination or broader-impact language when expected
+Build `EXECUTED_PANEL` as follows:
 
-6. **Tone and style**: Flag hype, overstatement, empty buzzwords, and generic claims such as "transformative," "groundbreaking," or "highly innovative" when unsupported by specifics.
+If `REVIEW_PLAN_PATH` is present:
 
-**Output format:**
-```
-## Agent 1: Clarity, Writing Quality & Compliance Signals
+1. Set `REVIEW_EXECUTION_MODE = "plan-driven"`.
+2. Use `SELECTED_PLAN_LENSES` as the controlling list of reviewer lenses.
+3. Launch only the selected lenses from the saved plan.
+4. Do not add fallback standing-panel reviewers on top of the saved plan.
 
-### Critical Writing or Clarity Issues
-[numbered list: Location | Problematic text or section | Why it hurts the proposal | Suggested correction]
+If `REVIEW_PLAN_PATH` is absent:
 
-### Minor Writing Issues
-[numbered list: same format]
+1. Set `REVIEW_EXECUTION_MODE = "fallback-standing-panel"`.
+2. Build the default standing panel in this order:
+   - `clarity-compliance`
+   - `significance-fit`
+   - `methods-feasibility`
+   - `budget-team-operations`
+   - `internal-consistency`
+   - `adversarial-panel`
+3. For each fallback reviewer, create a runtime entry with:
+   - `status = selected`
+   - `priority = primary`
+   - `rationale = "No saved review plan was supplied, so the default standing panel was used."`
+   - concise default `core_questions` appropriate to that reviewer
+   - empty `organization_overlay_ids`
 
-### Structural or Compliance Signals to Fix
-[numbered list: Missing or weak element | Where it should appear | Recommended remedy]
-```
+Every runtime reviewer entry must carry:
 
-The proposal files to review are: [LIST ALL FILE PATHS HERE]
+- `lens_id`
+- `label`
+- `priority`
+- `rationale`
+- `core_questions`
+- `organization_overlay_ids`
 
----
+## Phase 5.5: Map Runtime Lenses To Reviewer Briefs
 
-### AGENT 2 — Internal Consistency, Scope & Deliverables
+For each entry in `EXECUTED_PANEL`, map `lens_id` to the corresponding reviewer brief below.
 
-You are a technical reviewer checking whether the proposal is internally coherent and operationally consistent. Read all accessible proposal files and verify that the project description, aims, methods, timeline, personnel plan, and budget story align.
+Supported plan-driven and fallback lens ids:
 
-**What to check:**
+- `clarity-compliance`
+- `significance-fit`
+- `methods-feasibility`
+- `budget-team-operations`
+- `philanthropy-public-impact`
+- `ethics-philosophy`
+- `internal-consistency`
+- `adversarial-panel`
 
-1. **Aims vs. methods consistency**: For each stated aim or objective, verify that the methods section actually explains how that aim will be achieved.
+If a supplied saved plan selects any other `lens_id`, stop and report that the plan contains an unsupported executable lens rather than inventing a new reviewer role.
 
-2. **Aims vs. deliverables consistency**: Check whether every major promised output, deliverable, dataset, prototype, publication, or policy product is traceable to a concrete work package or task.
+Use these reviewer briefs:
 
-3. **Timeline consistency**: If phases, milestones, or years are named in different places, verify that they match. Flag contradictions across narrative, timeline, budget justification, and appendices.
+- `clarity-compliance`
+  - Review for readability, proposal structure, sponsor-language mirroring, required-component visibility, and compliance signals.
+- `significance-fit`
+  - Review for problem importance, novelty discipline, sponsor fit, competitive positioning, and whether the value proposition is strong enough for this call.
+- `methods-feasibility`
+  - Review for methodological adequacy, feasibility, dependencies, execution risk, risk mitigation, and outcome measurement.
+- `budget-team-operations`
+  - Review for budget credibility, staffing adequacy, timeline realism, coordination clarity, and missing operational support.
+- `philanthropy-public-impact`
+  - Review for theory of change, public-benefit plausibility, openness, non-technical legibility, scalability, sustainability, and implementation-facing impact claims.
+- `ethics-philosophy`
+  - Review for responsible-AI expectations, fairness or legitimacy claims, hidden normative assumptions, downstream harms, and governance adequacy.
+- `internal-consistency`
+  - Review for consistency across aims, methods, deliverables, staffing, budget story, terminology, and referenced attachments.
+- `adversarial-panel`
+  - Review as a demanding final panelist who gives an overall rating, major strengths, major weaknesses, required revisions, strategic fit assessment, and pointed panel questions.
 
-4. **Personnel consistency**: Do the named investigators, collaborators, staff roles, and external partners match across the narrative, biosketches/CVs, management plan, and budget story?
+## Phase 5.6: Launch Review Agents In Parallel
 
-5. **Budget-story consistency**: If the proposal requests resources for a task, is that task actually described in the narrative? Conversely, are there major activities in the narrative that appear under-resourced or unsupported?
+Launch one review agent per entry in `EXECUTED_PANEL`, preserving order.
 
-6. **Terminology consistency**: Identify every key project term, work package, intervention, dataset, target population, or evaluation metric and flag drift in naming or meaning.
+Every launched agent must receive:
 
-7. **Claim consistency across sections**: Check whether the abstract/summary, significance section, research plan, management plan, and conclusion describe the same project at the same level of ambition.
+- the shared review context block
+- the proposal/supporting file list
+- the instruction to use the call-specific profile when present and to fall back to the built-in sponsor archetype when it is not
+- the selected lens metadata:
+  - `lens_id`
+  - `label`
+  - `priority`
+  - `rationale`
+  - `core_questions`
+  - `organization_overlay_ids`
+- any overlay adaptation notes recovered from the expert registry
 
-8. **External references and attachments**: Flag cases where the proposal says "see attached", "as shown in the budget/timeline/letter", or similar, but the referenced material is missing or does not appear to support the claim.
+Use this runtime prompt template for each launched reviewer:
 
-**Output format:**
-```
-## Agent 2: Internal Consistency, Scope & Deliverables
+```text
+You are the reviewer for lens `[label]` (`[lens_id]`).
 
-### Critical Inconsistencies
-[numbered list: [Location 1] ↔ [Location 2] | What conflicts | Why it matters]
+Adopt the reviewer brief mapped to this lens. Use the shared review context, the proposal files, the saved plan rationale, and the core questions below as controlling instructions for what to emphasize.
 
-### Deliverable or Scope Gaps
-[numbered list: Aim/deliverable | Missing operational support | Recommended fix]
+Saved plan rationale:
+[rationale]
 
-### Terminology Drift
-[numbered list: Term | How it varies | Recommended standardization]
+Priority:
+[priority]
 
-### Minor Inconsistencies
-[numbered list: same format as Critical]
-```
+Core questions:
+[bulleted core_questions]
 
-The proposal files to review are: [LIST ALL FILE PATHS HERE]
+Organization-specific overlays to honor:
+[overlay ids or "none"]
 
----
+Overlay adaptation notes:
+[notes from registry if available, otherwise "none recovered"]
 
-### AGENT 3 — Significance, Innovation & Fit to the Call
+Additional reviewer brief for this lens:
+[mapped reviewer brief text from Phase 5.5]
 
-You are a skeptical panel reviewer evaluating whether the proposal addresses an important problem, offers a credible level of novelty, and fits the likely sponsor or solicitation.
+Output format:
+## Lens Review: [label] (`[lens_id]`)
 
-**What to check:**
+### Selection Rationale
+[1 short paragraph tying the saved plan rationale to the actual proposal]
 
-1. **Problem significance**: Does the proposal explain why the problem matters now, to whom it matters, and what is at stake if the problem is not addressed?
-
-2. **Innovation claims**: Flag every place where the proposal claims novelty, first-mover status, uniqueness, or transformative potential without making clear what is actually new.
-
-3. **Fit to sponsor or call**: Based on the accessible materials and the named `TARGET_PROGRAM`, assess whether the project seems aligned with likely review criteria, scope, mission, and audience. Flag mission drift or weak fit.
-
-4. **Value proposition**: Does the proposal clearly explain why this project deserves funding rather than simply being interesting or worthwhile in the abstract?
-
-5. **Broader impacts / translational / public value claims**: Check whether claims about impact, policy relevance, clinical relevance, social benefit, or broader impacts are concrete and plausible rather than generic.
-
-6. **Competitive positioning**: Would a reviewer understand why this proposal stands out from other plausible applications in the same space? If not, identify what is missing.
-
-7. **Overclaiming and underclaiming**:
-   - **Overclaiming**: Claims of importance or novelty that exceed the evidence presented
-   - **Underclaiming**: Strong aspects of the proposal that are not framed sharply enough to help in review
-
-**Output format:**
-```
-## Agent 3: Significance, Innovation & Fit to the Call
-
-### Major Fit or Significance Problems
-[numbered list: Location | Issue | Why it weakens competitiveness | Fix]
-
-### Innovation Overclaiming
-[numbered list: Quoted or paraphrased claim | Why it overreaches | Better framing]
-
-### Underused Strengths
-[numbered list: Strength | Where it should be emphasized | Suggested framing]
-
-### Minor Positioning Issues
-[numbered list: same format]
-```
-
-The proposal files to review are: [LIST ALL FILE PATHS HERE]
-
----
-
-### AGENT 4 — Research Design, Methods & Feasibility
-
-You are a demanding methodological reviewer assessing whether the proposed work is technically sound and realistically executable within the proposed project period.
-
-**What to check:**
-
-1. **Methodological adequacy**: For each aim or work package, does the proposal specify a method that is adequate to answer the stated question or achieve the stated objective?
-
-2. **Feasibility**: Are the timeline, staffing, data access, recruitment plan, partnerships, computation, infrastructure, and regulatory assumptions realistic?
-
-3. **Risk identification and mitigation**: Does the proposal identify the main technical, logistical, data, recruitment, regulatory, or dependency risks? Are fallback plans credible?
-
-4. **Evaluation plan**: If the proposal promises outputs, interventions, tools, pilots, or impact, does it specify how success will be measured?
-
-5. **Sampling, data, and evidence plan**: Where relevant, assess whether the proposal adequately explains:
-   - data sources or materials
-   - sample or participant selection
-   - power or scale logic
-   - analytic strategy
-   - validation or quality-control procedures
-
-6. **Dependencies and hidden assumptions**: Flag any part of the proposal that quietly depends on external approvals, access, collaborators, datasets, or technical breakthroughs that are not secured.
-
-7. **Ambition vs. capacity**: Is the project appropriately ambitious, or does it promise more than the team can plausibly deliver with the requested funds and time?
-
-**Output format:**
-```
-## Agent 4: Research Design, Methods & Feasibility
-
-### Major Methodological or Feasibility Risks
-[numbered list: Aim/work package | Risk or weakness | Why it matters | Recommended fix]
-
-### Missing Risk Mitigation
-[numbered list: Risk | Where it should be addressed | Suggested mitigation]
-
-### Evaluation Plan Gaps
-[numbered list: Claimed output or outcome | Missing measurement or success criterion | Recommended addition]
-
-### Minor Methodological Issues
-[numbered list: same format]
-```
-
-The proposal files to review are: [LIST ALL FILE PATHS HERE]
-
----
-
-### AGENT 5 — Budget, Timeline, Team & Management Plan
-
-You are a grants management reviewer assessing whether the proposal looks fundable from an execution and stewardship standpoint. Read all accessible proposal and supporting files.
-
-**What to check:**
-
-1. **Budget credibility**:
-   - Does the requested budget appear plausible for the proposed work?
-   - Are there obvious omissions, under-budgeted activities, or unjustified expenses?
-   - Does the budget narrative explain why major cost categories are necessary?
-
-2. **Timeline and milestone quality**:
-   - Are milestones concrete and sequenced logically?
-   - Are deadlines, dependencies, and review points visible?
-   - Are the proposed outputs achievable within the stated period?
-
-3. **Team composition and roles**:
-   - Does the team collectively appear qualified?
-   - Are roles and responsibilities clear?
-   - Are there single points of failure or expertise gaps?
-
-4. **Management and coordination**:
-   - If the project is collaborative, does the proposal explain who is responsible for what and how coordination will work?
-   - Is there a governance or decision structure where one is needed?
-
-5. **Resourcing vs. plan alignment**:
-   - Are personnel effort, subcontracting, equipment, travel, or consultant costs aligned with the actual work?
-   - Is there evidence of unrealistic staffing assumptions?
-
-6. **Supporting-document completeness**:
-   - Flag missing or weak budget justification, timeline, management plan, biosketches/CVs, letters of support, facilities/resources statements, or data-management plans when these appear relevant.
-
-**Output format:**
-```
-## Agent 5: Budget, Timeline, Team & Management Plan
-
-### Budget or Resource Concerns
-[numbered list: Category or task | Concern | Why it matters | Suggested fix]
-
-### Timeline or Milestone Problems
-[numbered list: Milestone/task | Issue | Recommended revision]
-
-### Team or Management Gaps
-[numbered list: Gap | Evidence | Recommended remedy]
-
-### Missing or Weak Supporting Documents
-[numbered list: Document | Why it seems needed | Suggested action]
-
-### Minor Resource or Coordination Issues
-[numbered list: same format as above]
-```
-
-The proposal files to review are: [LIST ALL FILE PATHS HERE]
-
----
-
-### AGENT 6 — Adversarial Panel Review & Funding Recommendation
-
-You are a demanding panel reviewer. Adopt the persona and review norms appropriate to `TARGET_PROGRAM`:
-- If it is a specific sponsor or program (e.g., NSF, NIH, ERC, HorizonEurope), apply that sponsor's likely expectations about significance, rigor, feasibility, team credibility, and public value.
-- If `TARGET_PROGRAM` is `major-funder`, apply high general standards for a competitive major external grant without a specific sponsor persona.
-- If `TARGET_PROGRAM` is `foundation`, apply the standards of a selective mission-driven foundation that expects a clear theory of change, focused scope, and practical impact.
-
-In all cases: you have reviewed many proposals and have extremely high standards. You are deciding whether this proposal should be funded, discussed seriously but revised, or declined. You are not hostile, but you are exacting, specific, and rigorous. Read the complete accessible proposal materials and produce a structured evaluation.
-
-**Your evaluation has 6 parts:**
-
-**Part 1 — The Core Funding Case**
-
-State in one sentence what the proposal is asking the funder to support. Then evaluate:
-- What is the central reason to fund this project?
-- Is the case for importance compelling?
-- Is the project differentiated from routine or incremental work?
-- Rate the proposal: [Outstanding | Competitive | Borderline | Not Competitive]
-- Justify your rating in 2-3 sentences.
-
-**Part 2 — Major Strengths**
-
-- What are the 3-5 strongest aspects of the proposal?
-- Which strengths are most likely to persuade reviewers?
-- Are any strengths present but not presented effectively enough?
-
-**Part 3 — Major Weaknesses**
-
-- What are the 3-5 biggest reasons this proposal could be declined?
-- Which weakness is most likely to damage the score most severely?
-- Are the weaknesses fatal, repairable, or mostly presentational?
-
-**Part 4 — Required Revisions Before Submission**
-
-List 3-6 revisions that are necessary before this proposal should be submitted or resubmitted.
-For each revision:
-- state precisely what must change
-- explain why it matters for panel review
-- explain what improvement it would create
-
-**Part 5 — Funding Fit and Strategic Positioning**
-
-- Is this proposal a strong fit for `TARGET_PROGRAM`?
-- If not, what kind of sponsor or scheme would be a better fit?
-- Is the requested scale and ambition matched to the likely funding mechanism?
-- What concrete repositioning would most improve competitiveness?
-
-**Part 6 — Panel Questions to the PI**
-
-Write 5-8 pointed questions that a skeptical review panel would ask the PI. These should probe the proposal's weakest points on significance, feasibility, fit, budget, staffing, and evidence.
-
-**Output format:**
-```
-## Agent 6: Adversarial Panel Review & Funding Recommendation
-
-### Part 1 — Core Funding Case
-[assessment + rating]
-
-### Part 2 — Major Strengths
+### Major Strengths
 [numbered list]
 
-### Part 3 — Major Weaknesses
+### Major Concerns
 [numbered list]
 
-### Part 4 — Required Revisions Before Submission
+### Required Revisions
 [numbered list]
 
-### Part 5 — Funding Fit and Strategic Positioning
-[assessment]
-
-### Part 6 — Panel Questions to the PI
+### Questions For The PI
 [numbered list]
+
+### Bottom Line
+[2-3 sentences on how this lens affects fundability]
 ```
 
-The proposal files to review are: [LIST ALL FILE PATHS HERE]
+In plan-driven mode, the saved plan is the controlling panel definition. In fallback mode, the standing panel definitions above are the controlling panel definition.
 
----
+## Phase 6: Consolidate and Save
 
-## Phase 3: Consolidate and Save
+After all reviewers return, consolidate them into a single structured report and save it to `REPORT_OUTPUT_PATH`.
 
-After all 6 agents return their results, consolidate them into a single structured report. Before saving, check whether `GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
+The coordinator must produce the final synthesis even if `adversarial-panel` was not launched. In plan-driven mode, derive the overall recommendation from the full set of selected lens outputs rather than inventing a missing standing-panel voice.
 
-Save the report to:
-
-`GRANT_PROPOSAL_REVIEW_[YYYY-MM-DD].md`
-
-where `[YYYY-MM-DD]` is today's date.
-
-**Report structure:**
+Report structure:
 
 ```markdown
 # Grant Proposal Review
@@ -396,82 +359,96 @@ where `[YYYY-MM-DD]` is today's date.
 **Proposal**: [Title]
 **PI(s)/Team**: [PI(s) or team]
 **Date**: [Today's date]
-**Review Standard**: [TARGET_PROGRAM — if `major-funder`, write "Competitive Major Funder"; if `foundation`, write "Foundation"; otherwise write the specific program/funder name]
+**Review Standard**: [EFFECTIVE_TARGET_PROGRAM - if `major-funder`, write "Competitive Major Funder"; if `foundation`, write "Foundation"; otherwise write the specific program/funder name]
+**Grant Profile**: [Path to profile if provided, otherwise "None supplied"]
+**Saved Review Plan**: [Path to plan if provided, otherwise "None supplied"]
+
+---
+
+## Context and Assumptions
+
+- Requested target program: [...]
+- Effective target program: [...]
+- Call-specific profile used: [yes/no]
+- Saved review plan used: [yes/no]
+- Review execution mode: [`plan-driven` or `fallback-standing-panel`]
+- Profile freshness warning: [...]
+- Profile ambiguity warning: [...]
+- Proposal-indicated sponsor/call: [...]
+
+---
+
+## Panel Configuration
+
+- Planning status: [saved plan used / planning skipped]
+- Planning mode from saved plan: [...]
+- Launched lenses: [ordered list of `label` (`lens_id`)]
+- Selected but not launched from plan: [optional/excluded entries, if any]
+- Organization-specific overlays honored: [...]
+- Confirmation requirement from plan: [...]
 
 ---
 
 ## Overall Assessment
 
-[3–4 sentences: What the proposal aims to do, its principal strength, and the single most critical issue
-that must be resolved before submission.]
+[3-4 sentences: What the proposal aims to do, its principal strength, and the single most critical issue that must be resolved before submission.]
 
 **Preliminary Recommendation**: [Submit as-is | Revise before submitting | Substantial revision required | Do not submit in current form]
 
 ---
 ## Priority Action Items
 
-The following issues require attention before submission, ordered by priority. When ranking across agents, apply this triage hierarchy: sponsor fit and competitive weakness (Agent 3, Agent 6) > methodological and feasibility risks (Agent 4) > internal inconsistencies and unsupported deliverables (Agent 2) > budget, timeline, and team gaps (Agent 5) > clarity and compliance signals (Agent 1). Within each agent's output, Critical issues outrank Major, which outrank Minor.
+Order the final action list by this hierarchy:
 
-**CRITICAL** (must fix — these could sink the proposal in panel review):
+1. `adversarial-panel` or `significance-fit`
+2. `methods-feasibility`
+3. `internal-consistency`
+4. `budget-team-operations`
+5. `philanthropy-public-impact`
+6. `ethics-philosophy`
+7. `clarity-compliance`
+
+If a lens was not launched, skip that tier rather than fabricating it.
+
+**CRITICAL** (must fix - these could sink the proposal in panel review):
 1. ...
 2. ...
 3. ...
 
-**MAJOR** (should fix — these are likely to weaken scores materially):
+**MAJOR** (should fix - these are likely to weaken scores materially):
 4. ...
 5. ...
 6. ...
 7. ...
 
-**MINOR** (polish — improves reviewer confidence and readability):
+**MINOR** (polish - improves reviewer confidence and readability):
 8. ...
 9. ...
 10. ...
 
 ---
 
-## Adversarial Panel Review & Funding Recommendation
+## Call Profile Summary
 
-[Agent 6 output]
-
----
-
-## Internal Consistency, Scope & Deliverables
-
-[Agent 2 output]
+[If a profile was provided, summarize the most important call-specific criteria, constraints, and priorities that shaped the review. If no profile was provided, say so explicitly.]
 
 ---
 
-## Significance, Innovation & Fit to the Call
+## Lens Reviews
 
-[Agent 3 output]
-
----
-
-## Research Design, Methods & Feasibility
-
-[Agent 4 output]
+[Include each launched reviewer output in execution order, preserving the per-lens headings.]
 
 ---
-
-## Budget, Timeline, Team & Management Plan
-
-[Agent 5 output]
-
----
-
-## Clarity, Writing Quality & Compliance Signals
-
-[Agent 1 output, preserving its structure]
-
----
-
 ```
 
 After saving, report to the user:
-1. The path to the saved report
-2. The preliminary recommendation from Agent 6
-3. The top 5 priority action items
-4. How many issues were flagged in each category (counts)
+
+1. the full path to the saved report
+2. the preliminary recommendation from the consolidated review
+3. the launched lenses
+4. the top 5 priority action items
+5. how many issues were flagged in each category
+6. whether the review used a call-specific profile or only the generic sponsor archetype
+7. whether the review used a saved review plan or the fallback standing panel
 
 If `CREATED_REVIEW_INPUT = true` for this run, delete `_review_input.txt`.

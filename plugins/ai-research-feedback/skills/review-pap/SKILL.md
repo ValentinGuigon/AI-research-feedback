@@ -61,6 +61,26 @@ If a file path was provided, use it as the main PAP file. Otherwise, auto-detect
      - If `pandoc` is not available, halt and tell the user to install `pandoc`.
      - Set `CREATED_REVIEW_INPUT = true`.
 
+## Phase 1.5: Resolve Report Output Path
+
+Before launching agents, resolve a deterministic output directory and filename.
+
+Directory rules:
+
+- Save PAP reviews under `review/paps/`.
+
+Filename rules:
+
+- Derive `PAP_SLUG` from the main PAP filename:
+  - lowercase
+  - letters, numbers, and hyphens only
+  - remove the original extension
+- Base filename:
+  - `pap-review--<PAP_SLUG>--[YYYY-MM-DD].md`
+- If that filename already exists in the target directory, append `-v2`, `-v3`, and so on.
+
+Store the final absolute report path as `REPORT_OUTPUT_PATH`.
+
 ## Phase 2: Launch 6 Review Agents in Parallel
 
 In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the PAP materials independently. Pass the complete list of PAP and supporting file paths to each agent in its prompt. When passing the PAP file path to agents: if `INPUT_MODE = "plain"`, substitute `_review_input.txt` for the main PAP file path in each agent's file list. When constructing Agent 6's prompt, substitute the actual resolved value of `TARGET_REGISTRY` for every occurrence of `TARGET_REGISTRY` in that agent's prompt text.
@@ -427,13 +447,7 @@ The PAP files to review are: [LIST ALL FILE PATHS HERE]
 
 ## Phase 3: Consolidate and Save
 
-After all 6 agents return their results, consolidate them into a single structured report. Before saving, check whether `PAP_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
-
-Save the report to:
-
-`PAP_REVIEW_[YYYY-MM-DD].md`
-
-where `[YYYY-MM-DD]` is today's date.
+After all 6 agents return their results, consolidate them into a single structured report and save it to `REPORT_OUTPUT_PATH`.
 
 **Report structure:**
 
@@ -515,7 +529,7 @@ The following issues require attention before registration, ordered by priority.
 
 After saving, report to the user:
 
-1. The path to the saved report
+1. The full path to the saved report
 2. The preliminary recommendation from Agent 6
 3. The top 5 priority action items
 4. How many issues were flagged in each category (counts)

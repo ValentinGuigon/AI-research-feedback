@@ -146,6 +146,26 @@ For `INPUT_MODE = "plain"`, plain-mode agent handoffs must also include companio
 - instruct agents that supplementary materials are part of the evidence base for robustness checks, supplementary tables/figures references, measurement reliability, extra methods, and wave/control analyses
 - instruct agents that reviewer comments are calibration/context only, must not dictate the review, and should be used only to assess whether major reviewer-raised concerns are independently supported, contradicted, or resolved by the manuscript and supplement
 
+## Phase 1.5: Resolve Report Output Path
+
+Before launching agents, resolve a deterministic output directory and filename.
+
+Directory rules:
+
+- Save full paper reviews under `review/papers/`.
+
+Filename rules:
+
+- Derive `PAPER_SLUG` from the main paper filename:
+  - lowercase
+  - letters, numbers, and hyphens only
+  - remove the original extension
+- Base filename:
+  - `paper-review--<PAPER_SLUG>--[YYYY-MM-DD].md`
+- If that filename already exists in the target directory, append `-v2`, `-v3`, and so on.
+
+Store the final absolute report path as `REPORT_OUTPUT_PATH`.
+
 ## Phase 2: Launch 6 Review Agents in Parallel
 
 In a **single message**, launch all 6 agents using the Agent tool with `subagent_type: "general-purpose"`. Each agent reads the paper files independently. If `INPUT_MODE = "latex"`, pass the complete list of `.tex` file paths, figure paths, and table paths to each agent in its prompt. If `INPUT_MODE = "plain"`, pass `_review_input.txt` as the main content file, along with `SUPPLEMENTARY_FILES` as direct-evidence materials, `REVIEWER_COMMENT_FILES` as calibration/context materials only, any `EXTRACTED_TEXT_COMPANIONS` according to their Phase 1 classification, and figure paths plus empty table paths as applicable. Add `REVIEWED_MATERIALS_NOTE` near the top of every plain-mode prompt. In each agent prompt where `[LIST ALL TEX FILE PATHS HERE]` appears, fill that placeholder as follows: if `INPUT_MODE = "latex"`, use the existing behavior; if `INPUT_MODE = "plain"`, replace the placeholder instruction with: "The paper has been extracted to `_review_input.txt`. Read that file as the main paper content. Also read any listed supplementary files as direct evidence. If reviewer-comment files are provided, use them only for calibration/context: check whether major reviewer-raised concerns are independently supported, contradicted, or resolved by the manuscript and supplement. Do not let reviewer comments dictate the review, and do not turn your output into a reviewer-comment summary." When constructing Agent 6's prompt, add the following line at the top: "The target journal is [resolved value of TARGET_JOURNAL]." Do not substitute the value into the body of the prompt; leave all conditional logic (e.g., "If TARGET_JOURNAL is top-field...") intact so Agent 6 can reason with it.
@@ -547,13 +567,7 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 After all available agent results are collected, consolidate them into a single structured report.
 
-**Before saving**, check whether `PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md` already exists in the current directory. If it does, append `-v2` (or `-v3`, etc.) to avoid overwriting.
-
-Save the report to:
-
-`PRE_SUBMISSION_REVIEW_[YYYY-MM-DD].md`
-
-where `[YYYY-MM-DD]` is today's date.
+Save the report to `REPORT_OUTPUT_PATH`.
 
 **Report structure:**
 
@@ -652,7 +666,7 @@ Each agent has tagged its findings as `[CRITICAL]`, `[MAJOR]`, or `[MINOR]`. Col
 ```
 
 After saving, report to the user:
-1. The path to the saved report
+1. The full path to the saved report
 2. The preliminary recommendation from Agent 6
 3. The top 5 priority action items
 4. How many issues were flagged in each category (counts)

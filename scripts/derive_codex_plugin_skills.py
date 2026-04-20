@@ -8,6 +8,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CANONICAL_SKILLS_DIR = REPO_ROOT / "Skills"
 PLUGIN_SKILLS_DIR = REPO_ROOT / "plugins" / "ai-research-feedback" / "skills"
 EXPECTED_SKILLS = [
+    "fetch-grant-context",
+    "plan-grant-review",
     "review-paper",
     "review-paper-light",
     "review-paper-code",

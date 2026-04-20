@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Grant Review Expert Registry",
+  "description": "Reusable registry of grant-review expert lenses and organization-specific overlays.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registry_version",
+    "updated_at",
+    "expert_lenses"
+  ],
+  "properties": {
+    "registry_version": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "expert_lenses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label",
+          "category",
+          "default_inclusion",
+          "selection_signals",
+          "core_questions",
+          "output_focus"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "technical",
+              "public-impact",
+              "ethics",
+              "operations",
+              "organization-specific",
+              "writing"
+            ]
+          },
+          "default_inclusion": {
+            "type": "string",
+            "enum": [
+              "always",
+              "conditional"
+            ]
+          },
+          "selection_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "core_questions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "output_focus": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "organization_overlays": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "organization",
+                "activation_signals",
+                "adaptation_notes"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "organization": {
+                  "type": "string"
+                },
+                "activation_signals": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "adaptation_notes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -77,6 +77,26 @@ Record:
 - Paper title, authors, and abstract (from `.tex` for LaTeX inputs, or
   best-effort from the extracted text for non-LaTeX inputs)
 
+## Phase 1.5: Resolve Report Output Path
+
+Before launching agents, resolve a deterministic output directory and filename.
+
+Directory rules:
+
+- Save quick paper reviews under `review/papers/`.
+
+Filename rules:
+
+- Derive `PAPER_SLUG` from the main paper filename:
+  - lowercase
+  - letters, numbers, and hyphens only
+  - remove the original extension
+- Base filename:
+  - `paper-light-review--<PAPER_SLUG>--[YYYY-MM-DD].md`
+- If that filename already exists in the target directory, append `-v2`, `-v3`, and so on.
+
+Store the final absolute report path as `REPORT_OUTPUT_PATH`.
+
 ## Phase 2: Launch 2 Agents in Parallel
 
 In a **single message**, launch both agents using the Agent tool with
@@ -242,9 +262,7 @@ The .tex files to review are: [LIST ALL TEX FILE PATHS HERE]
 
 After both agents return, consolidate into a single report.
 
-Check whether `QUICK_REVIEW_[YYYY-MM-DD].md` already exists. If so, append `-v2` (or `-v3`, etc.).
-
-Save to: `QUICK_REVIEW_[YYYY-MM-DD].md`
+Save to: `REPORT_OUTPUT_PATH`
 
 **Report structure:**
 
@@ -294,7 +312,7 @@ Before finalizing the priority list, remove or downgrade any item that was frame
 ```
 
 After saving, report to the user:
-1. Path to the saved report
+1. Full path to the saved report
 2. Preliminary recommendation
 3. Top 3 priority action items
 4. Issue counts by severity

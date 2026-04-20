@@ -2,7 +2,7 @@
 name: review-paper-code
 description: Review research code for reproducibility and quality, extract the paper's main empirical claims, compare paper to code, and write a constructive markdown report. Designed for psychology and neuroscience projects with papers in any supported format and Python, R, MATLAB, or BIDS pipeline code.
 user-invocable: true
-argument-hint: [optional: path/to/paper] [optional: path/to/code_dir] [optional: main|full]
+argument-hint: "[optional: path/to/paper] [optional: path/to/code_dir] [optional: main|full]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 ---
 
@@ -154,6 +154,28 @@ Before proceeding, tell the user:
 - the number of code files detected and the number selected for review
 - the review depth
 - any ambiguity worth noting
+
+### 6. Resolve report output path
+
+Before launching agents, resolve a deterministic output directory and filename.
+
+Directory rules:
+
+- Save paper-code reviews under `review/code/`.
+
+Filename rules:
+
+- If `PAPER_FILE` is available, derive `REVIEW_SUBJECT_SLUG` from the paper filename.
+- Otherwise derive `REVIEW_SUBJECT_SLUG` from the chosen `CODE_DIR` directory name.
+- Slug rules:
+  - lowercase
+  - letters, numbers, and hyphens only
+  - remove any original extension when present
+- Base filename:
+  - `paper-code-review--<REVIEW_SUBJECT_SLUG>--[YYYY-MM-DD].md`
+- If that filename already exists in the target directory, append `-v2`, `-v3`, and so on.
+
+Store the final absolute report path as `REPORT_OUTPUT_PATH`.
 
 ## Phase 2: Read the Paper
 
@@ -332,8 +354,8 @@ Create:
 
 ## Phase 5: Write the Report
 
-Write the final report to the current working directory as:
-- `code_review_report.md`
+Write the final report to:
+- `REPORT_OUTPUT_PATH`
 
 Use this structure:
 
@@ -402,7 +424,7 @@ Keep the final report readable. Prefer concise, high-signal summaries over exhau
 
 After writing the report, tell the user:
 - that the code review is complete
-- that the report was written to `code_review_report.md`
+- that the report was written to the full path in `REPORT_OUTPUT_PATH`
 - the `Overall Assessment`
 - 3-5 bullets from `What's Working Well`
 - the top 3 suggested next steps

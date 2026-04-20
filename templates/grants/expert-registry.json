@@ -1,0 +1,175 @@
+{
+  "registry_version": "1.0",
+  "updated_at": "2026-04-20",
+  "expert_lenses": [
+    {
+      "id": "clarity-compliance",
+      "label": "Clarity, writing, and compliance",
+      "category": "writing",
+      "default_inclusion": "always",
+      "selection_signals": [
+        "all grant proposals",
+        "calls with strict formatting or attachment requirements"
+      ],
+      "core_questions": [
+        "Is the proposal easy for a mixed review panel to read quickly?",
+        "Are required components and reviewer cues visible?",
+        "Does the language mirror the call without sounding generic?"
+      ],
+      "output_focus": [
+        "readability issues",
+        "missing compliance signals",
+        "language revisions"
+      ]
+    },
+    {
+      "id": "significance-fit",
+      "label": "Significance, innovation, and funder fit",
+      "category": "technical",
+      "default_inclusion": "always",
+      "selection_signals": [
+        "all competitive grants"
+      ],
+      "core_questions": [
+        "Why should this funder support this project now?",
+        "Is the problem important to the stated audience?",
+        "Are novelty and differentiation framed credibly?"
+      ],
+      "output_focus": [
+        "competitive positioning",
+        "reviewer-fit risks",
+        "reframing opportunities"
+      ]
+    },
+    {
+      "id": "methods-feasibility",
+      "label": "Methods and feasibility",
+      "category": "technical",
+      "default_inclusion": "always",
+      "selection_signals": [
+        "all research and implementation grants"
+      ],
+      "core_questions": [
+        "Can the stated aims be executed with the proposed methods and resources?",
+        "Are major dependencies, risks, and fallback plans visible?",
+        "Are success metrics measurable and credible?"
+      ],
+      "output_focus": [
+        "design risks",
+        "feasibility gaps",
+        "evaluation gaps"
+      ]
+    },
+    {
+      "id": "budget-team-operations",
+      "label": "Budget, team, and management",
+      "category": "operations",
+      "default_inclusion": "always",
+      "selection_signals": [
+        "all grants with budgets, staffing, or partnerships"
+      ],
+      "core_questions": [
+        "Do staffing, budget, and timeline match the work?",
+        "Are coordination and governance responsibilities clear?",
+        "Are required support documents complete?"
+      ],
+      "output_focus": [
+        "resource gaps",
+        "team risks",
+        "missing operational support"
+      ]
+    },
+    {
+      "id": "philanthropy-public-impact",
+      "label": "Philanthropy and public impact",
+      "category": "public-impact",
+      "default_inclusion": "conditional",
+      "selection_signals": [
+        "foundation calls",
+        "social impact language",
+        "theory of change requirements",
+        "public-good or community benefit expectations"
+      ],
+      "core_questions": [
+        "Is the social value proposition explicit and plausible?",
+        "Does the proposal show a credible pathway from outputs to public benefit?",
+        "Will non-technical reviewers understand why the work matters?"
+      ],
+      "output_focus": [
+        "theory-of-change gaps",
+        "public-benefit framing",
+        "scalability and sustainability concerns"
+      ],
+      "organization_overlays": [
+        {
+          "id": "google-org-public-benefit",
+          "organization": "Google.org",
+          "activation_signals": [
+            "Google.org",
+            "public goods",
+            "responsible use of AI",
+            "open science"
+          ],
+          "adaptation_notes": [
+            "Stress measurable public benefit and openness.",
+            "Check whether AI is central rather than decorative.",
+            "Favor reproducible outputs with broad downstream use."
+          ]
+        },
+        {
+          "id": "centre-for-public-impact",
+          "organization": "Centre for Public Impact",
+          "activation_signals": [
+            "Centre for Public Impact",
+            "public sector",
+            "public legitimacy",
+            "systems change"
+          ],
+          "adaptation_notes": [
+            "Stress implementation realism in institutional settings.",
+            "Check legitimacy, adoption, and stakeholder alignment.",
+            "Favor concrete public problem framing over pure novelty."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ethics-philosophy",
+      "label": "Ethics and philosophy",
+      "category": "ethics",
+      "default_inclusion": "conditional",
+      "selection_signals": [
+        "normative claims",
+        "responsible AI language",
+        "fairness or justice claims",
+        "public legitimacy concerns",
+        "high-risk interventions"
+      ],
+      "core_questions": [
+        "What assumptions about benefit, fairness, and legitimacy does the proposal make?",
+        "Are normative tradeoffs explicit rather than hidden?",
+        "Would a skeptical ethics reviewer find the governance story adequate?"
+      ],
+      "output_focus": [
+        "normative blind spots",
+        "harm and governance risks",
+        "ethical framing improvements"
+      ],
+      "organization_overlays": [
+        {
+          "id": "google-org-responsible-ai",
+          "organization": "Google.org",
+          "activation_signals": [
+            "AI Principles",
+            "responsible AI",
+            "public goods"
+          ],
+          "adaptation_notes": [
+            "Check alignment with responsible AI expectations.",
+            "Make openness and harm mitigation operational."
+          ]
+        }
+      ]
+    }
+  ]
+}

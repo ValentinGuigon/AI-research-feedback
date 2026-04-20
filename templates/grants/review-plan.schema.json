@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Grant Review Plan",
+  "description": "Saved review-panel plan for one proposal review run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_version",
+    "created_at",
+    "planning_mode",
+    "proposal_path",
+    "effective_target_program",
+    "grant_profile_path",
+    "expert_registry_path",
+    "panel_selection",
+    "uncertainties",
+    "confirmation"
+  ],
+  "properties": {
+    "plan_version": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "planning_mode": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "fast",
+        "high-stakes"
+      ]
+    },
+    "proposal_path": {
+      "type": "string"
+    },
+    "supporting_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "role"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "effective_target_program": {
+      "type": "string"
+    },
+    "grant_profile_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "expert_registry_path": {
+      "type": "string"
+    },
+    "proposal_summary": {
+      "type": "string"
+    },
+    "panel_selection": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lens_id",
+          "label",
+          "status",
+          "rationale",
+          "priority",
+          "core_questions"
+        ],
+        "properties": {
+          "lens_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "selected",
+              "optional",
+              "excluded"
+            ]
+          },
+          "organization_overlay_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "secondary"
+            ]
+          },
+          "weight": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "core_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "reason"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Grant Context Profile",
+  "description": "Normalized local cache of one exact grant call or funding opportunity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_version",
+    "grant_name",
+    "sponsor",
+    "program_name",
+    "base_funder_mode",
+    "source_urls",
+    "fetched_at",
+    "expires_after_days",
+    "manual_review_required",
+    "deadline",
+    "eligibility",
+    "required_documents",
+    "budget_rules",
+    "review_criteria",
+    "program_priorities",
+    "language_to_mirror",
+    "risks_and_ambiguities",
+    "reviewer_brief",
+    "source_evidence"
+  ],
+  "properties": {
+    "profile_version": {
+      "type": "string"
+    },
+    "grant_name": {
+      "type": "string"
+    },
+    "sponsor": {
+      "type": "string"
+    },
+    "program_name": {
+      "type": "string"
+    },
+    "cycle_year": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "base_funder_mode": {
+      "type": "string",
+      "enum": [
+        "NSF",
+        "NIH",
+        "ERC",
+        "HorizonEurope",
+        "major-funder",
+        "foundation"
+      ]
+    },
+    "source_urls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "fetched_at": {
+      "type": "string"
+    },
+    "expires_after_days": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "manual_review_required": {
+      "type": "boolean"
+    },
+    "deadline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "notes"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "eligibility": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "required",
+          "notes"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "budget_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "review_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "criterion",
+          "details"
+        ],
+        "properties": {
+          "criterion": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "program_priorities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reviewer_ecosystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "declared_reviewers",
+        "inferred_reviewers",
+        "recommended_lenses",
+        "organization_overlays"
+      ],
+      "properties": {
+        "declared_reviewers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "inferred_reviewers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommended_lenses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "organization_overlays": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "theory_of_change_expectations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "governance_and_ethics_expectations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "language_to_mirror": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risks_and_ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reviewer_brief": {
+      "type": "string"
+    },
+    "retrieval_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fact",
+          "evidence",
+          "source",
+          "explicit"
+        ],
+        "properties": {
+          "fact": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "explicit": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
