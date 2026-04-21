@@ -1,7 +1,7 @@
 {
   "name": "ai-research-feedback",
   "version": "0.1.0",
-  "description": "Academic research review skills derived from canonical workflow markdown.",
+  "description": "Academic research review and grant editing skills derived from canonical workflow markdown.",
   "author": {
     "name": "Valentin Guigon",
     "url": "https://valentinguigon.substack.com"
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "AI Research Feedback",
-    "shortDescription": "Academic review workflows for papers and PAPs.",
-    "longDescription": "Thin Codex plugin packaging for canonical academic review workflows authored in Skills/*.md.",
+    "shortDescription": "Academic review and revision-planning workflows.",
+    "longDescription": "Thin Codex plugin packaging for canonical academic review workflows plus shared and grant-specific post-review editing specs authored in Skills/*.md.",
     "developerName": "Valentin Guigon",
     "category": "Productivity",
     "capabilities": [
@@ -31,7 +31,11 @@
     "defaultPrompt": [
       "Review my paper for journal fit and major weaknesses.",
       "Run a quick paper check before submission.",
-      "Review my pre-analysis plan before registration."
+      "Review my pre-analysis plan before registration.",
+      "Plan revisions from my saved review report.",
+      "Load writing constraints for a grant or paper revision pass.",
+      "Contextualize grant revision targets from saved editing artifacts.",
+      "Draft grant edit instructions from a saved contextualized edit plan."
     ],
     "brandColor": "#1F6F5E"
   }

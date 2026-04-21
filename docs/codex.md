@@ -37,8 +37,38 @@ Use the AI Research Feedback plugin skill `plan-grant-review` on path/to/proposa
 Use the AI Research Feedback plugin skill `review-grant` with foundation profile=review/grants/my-call/profile.json "path/to/proposal.pdf".
 ```
 
+```text
+Use the AI Research Feedback plugin skill `plan-revisions` with type=grant source=path/to/proposal.pdf review=review/grants/my-call/grant-review--proposal--2026-04-20.md.
+```
+
+```text
+Use the AI Research Feedback plugin skill `load-writing-constraints` with type=grant source=path/to/proposal.pdf profile=review/grants/my-call/profile.json.
+```
+
+```text
+Use the AI Research Feedback plugin skill `contextualize-revisions-grant` with source=path/to/proposal.pdf revision_plan=review/editing/grants/proposal/revision-plan.json writing_constraints=review/editing/grants/proposal/writing-constraints.json.
+```
+
+```text
+Use the AI Research Feedback plugin skill `draft-edits-grant` with contextualized_plan=review/editing/grants/proposal/contextualized-edit-plan.json.
+```
+
 If Codex seems to ignore the plugin, make the prompt more explicit:
 
 ```text
 Use the installed AI Research Feedback plugin. Run the `plan-grant-review` skill with foundation profile=review/grants/my-call/profile.json "path/to/proposal.pdf", then run the `review-grant` skill with foundation profile=review/grants/my-call/profile.json plan=review/grants/my-call/review-plan.json "path/to/proposal.pdf".
 ```
+
+## Available Skills
+
+- `fetch-grant-context`
+- `plan-grant-review`
+- `review-paper`
+- `review-paper-light`
+- `review-paper-code`
+- `review-pap`
+- `review-grant`
+- `plan-revisions`
+- `load-writing-constraints`
+- `contextualize-revisions-grant`
+- `draft-edits-grant`

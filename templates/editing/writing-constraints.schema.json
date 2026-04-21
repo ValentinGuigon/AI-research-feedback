@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Post-Review Writing Constraints",
+  "description": "Explicit and inferred writing constraints that govern the next edit pass for a single source document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_version",
+    "document_type",
+    "source_document_path",
+    "generated_at",
+    "constraints",
+    "constraint_sources"
+  ],
+  "properties": {
+    "artifact_version": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "grant",
+        "paper",
+        "pap",
+        "paper-code"
+      ]
+    },
+    "source_document_path": {
+      "type": "string"
+    },
+    "review_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "length_limits",
+        "required_sections",
+        "ordering_rules",
+        "style_requirements",
+        "audience",
+        "hard_constraints",
+        "soft_preferences"
+      ],
+      "properties": {
+        "length_limits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "scope",
+              "unit",
+              "value",
+              "strict"
+            ],
+            "properties": {
+              "scope": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "words",
+                  "pages",
+                  "characters",
+                  "paragraphs",
+                  "figures",
+                  "tables"
+                ]
+              },
+              "value": {
+                "type": "number"
+              },
+              "strict": {
+                "type": "boolean"
+              },
+              "notes": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "required_sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "required"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "notes": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "ordering_rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "style_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audience": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "primary"
+          ],
+          "properties": {
+            "primary": {
+              "type": "string"
+            },
+            "secondary": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "hard_constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "soft_preferences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "constraint_sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_type",
+          "source_ref",
+          "evidence",
+          "explicit"
+        ],
+        "properties": {
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "source-document",
+              "review-report",
+              "grant-profile",
+              "call-material",
+              "journal-guidelines",
+              "registry-guidelines",
+              "user-instruction",
+              "inference"
+            ]
+          },
+          "source_ref": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "explicit": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

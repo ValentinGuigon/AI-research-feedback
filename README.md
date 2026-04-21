@@ -51,6 +51,16 @@ Use the AI Research Feedback plugin skill `review-paper` on ./paper/my-paper-to-
 - `fetch-grant-context`: grant call intake and normalization
 - `plan-grant-review`: reviewer-panel planning and confirmation before grant review
 - `review-grant`: proposal review against a sponsor archetype and optional cached grant profile
+- `plan-revisions`: shared post-review revision planning from saved review reports
+- `load-writing-constraints`: shared writing-constraint extraction for revision passes
+- `contextualize-revisions-grant`: grant-specific post-review contextualization from saved editing artifacts
+- `draft-edits-grant`: grant-specific drafted edit instructions from a saved contextualized edit plan
+
+Planned next layer:
+
+- post-review editing as a staged architecture, documented in `docs/post-review-editing.md`
+- shared editing schemas under `templates/editing/`
+- non-grant contextualization and drafting workflow specs for papers, PAPs, and paper-code packages
 
 ## Output Locations
 
@@ -65,6 +75,31 @@ Review reports save to deterministic locations:
 - `review-grant` without profile -> `review/grant-review--<proposal-slug>--YYYY-MM-DD.md`
 
 If a filename already exists, the workflow appends `-v2`, `-v3`, and so on.
+
+Planned post-review editing artifacts save under deterministic per-source folders:
+
+- `revision-plan` -> `review/editing/<object-folder>/<source-slug>/revision-plan.json`
+- `writing-constraints` -> `review/editing/<object-folder>/<source-slug>/writing-constraints.json`
+- `contextualized-edit-plan` -> `review/editing/<object-folder>/<source-slug>/contextualized-edit-plan.json`
+- `drafted-edit-instructions` -> `review/editing/<object-folder>/<source-slug>/drafted-edit-instructions.json`
+
+Current object folders are:
+
+- `grants`
+- `papers`
+- `paps`
+- `paper-code`
+
+Shared post-review editing stages now specified:
+
+- `plan-revisions` -> `review/editing/<object-folder>/<source-slug>/revision-plan.json`
+- `load-writing-constraints` -> `review/editing/<object-folder>/<source-slug>/writing-constraints.json`
+- `contextualize-revisions-grant` -> `review/editing/grants/<source-slug>/contextualized-edit-plan.json`
+- `draft-edits-grant` -> `review/editing/grants/<source-slug>/drafted-edit-instructions.json`
+
+Representative runtime validation artifacts now exist for the Google.org grant fixture under:
+
+- `review/editing/grants/google-impact-challenge-ai-for-science-application-1/`
 
 ## Grant Review In One Glance
 
@@ -102,6 +137,7 @@ Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/goo
 - `scripts/derive_codex_plugin_skills.py`: syncs canonical workflows into the plugin bundle
 - `review/grants/`: run-specific grant profiles and review plans
 - `templates/grants/`: reusable grant schemas and expert-registry templates
+- `templates/editing/`: shared post-review editing artifact schemas
 
 ## Docs
 
@@ -111,3 +147,4 @@ Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/goo
 - [docs/pap-review.md](docs/pap-review.md)
 - [docs/grant-review.md](docs/grant-review.md)
 - [docs/grant-review-planning.md](docs/grant-review-planning.md)
+- [docs/post-review-editing.md](docs/post-review-editing.md)
