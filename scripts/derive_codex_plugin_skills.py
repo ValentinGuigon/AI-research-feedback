@@ -15,6 +15,8 @@ EXPECTED_SKILLS = [
     "draft-edits-paper",
     "load-writing-constraints",
     "plan-grant-review",
+    "plan-feedback-revisions",
+    "convert-feedback-plan-to-revision-plan",
     "plan-revisions",
     "review-paper",
     "review-paper-light",

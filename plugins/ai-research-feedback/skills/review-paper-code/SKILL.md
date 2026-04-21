@@ -161,7 +161,7 @@ Before launching agents, resolve a deterministic output directory and filename.
 
 Directory rules:
 
-- Save paper-code reviews under `review/code/`.
+- Save paper-code reviews under `artifacts/paper-code/<source-slug>/review/`.
 
 Filename rules:
 

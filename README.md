@@ -42,6 +42,14 @@ Use the AI Research Feedback plugin skill `fetch-grant-context` on https://examp
 Use the AI Research Feedback plugin skill `review-paper` on ./paper/my-paper-to-review.pdf with journal=PNAS.
 ```
 
+```text
+Use the AI Research Feedback plugin skill `plan-feedback-revisions` with type=grant source=./proposal-with-comments.docx source_type=docx-comment mode=single feedback_id=1.
+```
+
+```text
+Use the AI Research Feedback plugin skill `convert-feedback-plan-to-revision-plan` with feedback_plan=artifacts/grants/proposal/editing/normalized-feedback-plan.json.
+```
+
 ## Workflows
 
 - `review-paper`: full referee-style paper review
@@ -51,6 +59,8 @@ Use the AI Research Feedback plugin skill `review-paper` on ./paper/my-paper-to-
 - `fetch-grant-context`: grant call intake and normalization
 - `plan-grant-review`: reviewer-panel planning and confirmation before grant review
 - `review-grant`: proposal review against a sponsor archetype and optional cached grant profile
+- `plan-feedback-revisions`: shared feedback-addressed planning from DOCX comments into normalized feedback targets
+- `convert-feedback-plan-to-revision-plan`: compatibility bridge from normalized feedback targets into revision-plan artifacts
 - `plan-revisions`: shared post-review revision planning from saved review reports
 - `load-writing-constraints`: shared writing-constraint extraction for revision passes
 - `contextualize-revisions-grant`: grant-specific post-review contextualization from saved editing artifacts
@@ -61,6 +71,7 @@ Use the AI Research Feedback plugin skill `review-paper` on ./paper/my-paper-to-
 Planned next layer:
 
 - post-review editing as a staged architecture, documented in `docs/post-review-editing.md`
+- feedback-addressed editing as a generalized upstream layer for DOCX comments, PDF annotations, review reports, inline notes, and direct user instructions, documented in `docs/feedback-addressed-editing.md`; the first DOCX-comment adapter path is represented by `plan-feedback-revisions`
 - shared editing schemas under `templates/editing/`
 - PAP or paper-code editing workflow specs
 
@@ -68,22 +79,23 @@ Planned next layer:
 
 Review reports save to deterministic locations:
 
-- `review-paper` -> `review/papers/paper-review--<paper-slug>--YYYY-MM-DD.md`
-- `review-paper-light` -> `review/papers/paper-light-review--<paper-slug>--YYYY-MM-DD.md`
-- `review-paper-code` -> `review/code/paper-code-review--<subject-slug>--YYYY-MM-DD.md`
-- `review-pap` -> `review/paps/pap-review--<pap-slug>--YYYY-MM-DD.md`
+- `review-paper` -> `artifacts/papers/<paper-slug>/review/paper-review--YYYY-MM-DD.md`
+- `review-paper-light` -> `artifacts/papers/<paper-slug>/review/paper-light-review--YYYY-MM-DD.md`
+- `review-paper-code` -> `artifacts/paper-code/<subject-slug>/review/paper-code-review--YYYY-MM-DD.md`
+- `review-pap` -> `artifacts/paps/<source-slug>/review/pap-review--<pap-slug>--YYYY-MM-DD.md`
 - `plan-grant-review` with profile -> next to the profile as `review-plan.json`
 - `review-grant` with profile -> next to the profile as `grant-review--<proposal-slug>--YYYY-MM-DD.md`
-- `review-grant` without profile -> `review/grant-review--<proposal-slug>--YYYY-MM-DD.md`
+- `review-grant` without profile -> `artifacts/grants/<proposal-slug>/review/grant-review--YYYY-MM-DD.md`
 
 If a filename already exists, the workflow appends `-v2`, `-v3`, and so on.
 
 Planned post-review editing artifacts save under deterministic per-source folders:
 
-- `revision-plan` -> `review/editing/<object-folder>/<source-slug>/revision-plan.json`
-- `writing-constraints` -> `review/editing/<object-folder>/<source-slug>/writing-constraints.json`
-- `contextualized-edit-plan` -> `review/editing/<object-folder>/<source-slug>/contextualized-edit-plan.json`
-- `drafted-edit-instructions` -> `review/editing/<object-folder>/<source-slug>/drafted-edit-instructions.json`
+- `normalized-feedback-plan` -> `artifacts/<object-folder>/<source-slug>/editing/normalized-feedback-plan.json`
+- `revision-plan` -> `artifacts/<object-folder>/<source-slug>/editing/revision-plan.json`
+- `writing-constraints` -> `artifacts/<object-folder>/<source-slug>/editing/writing-constraints.json`
+- `contextualized-edit-plan` -> `artifacts/<object-folder>/<source-slug>/editing/contextualized-edit-plan.json`
+- `drafted-edit-instructions` -> `artifacts/<object-folder>/<source-slug>/editing/drafted-edit-instructions.json`
 
 Current object folders are:
 
@@ -94,31 +106,39 @@ Current object folders are:
 
 Shared post-review editing stages now specified:
 
-- `plan-revisions` -> `review/editing/<object-folder>/<source-slug>/revision-plan.json`
-- `load-writing-constraints` -> `review/editing/<object-folder>/<source-slug>/writing-constraints.json`
-- `contextualize-revisions-grant` -> `review/editing/grants/<source-slug>/contextualized-edit-plan.json`
-- `draft-edits-grant` -> `review/editing/grants/<source-slug>/drafted-edit-instructions.json`
-- `contextualize-revisions-paper` -> `review/editing/papers/<source-slug>/contextualized-edit-plan.json`
-- `draft-edits-paper` -> `review/editing/papers/<source-slug>/drafted-edit-instructions.json`
+- `plan-feedback-revisions` -> `artifacts/<object-folder>/<source-slug>/editing/normalized-feedback-plan.json`
+- `convert-feedback-plan-to-revision-plan` -> `artifacts/<object-folder>/<source-slug>/editing/revision-plan.json`
+- `plan-revisions` -> `artifacts/<object-folder>/<source-slug>/editing/revision-plan.json`
+- `load-writing-constraints` -> `artifacts/<object-folder>/<source-slug>/editing/writing-constraints.json`
+- `contextualize-revisions-grant` -> `artifacts/grants/<source-slug>/editing/contextualized-edit-plan.json`
+- `draft-edits-grant` -> `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
+- `contextualize-revisions-paper` -> `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json`
+- `draft-edits-paper` -> `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
 
 Representative runtime validation artifacts now exist for the Google.org grant fixture under:
 
-- `review/editing/grants/google-impact-challenge-ai-for-science-application-1/`
+- `artifacts/grants/google-impact-challenge-ai-for-science-application/editing/`
+
+Representative DOCX-comment feedback normalization artifacts now exist for the Benrimoh Research Vision fixture under:
+
+- `artifacts/grants/benrimoh-research-vision/editing/`
+
+That same Benrimoh path also contains representative compatibility revision-plan artifacts converted from the single-comment and all-comment normalized feedback plans. The selected single-comment `FB2` path additionally has downstream validation artifacts for writing constraints, grant contextualization, and drafted edit instructions.
 
 Representative paper contextualization validation artifacts now exist for the Communications Psychology paper fixture under:
 
-- `review/editing/papers/s44271-024-00170-w/`
+- `artifacts/papers/s44271-024-00170-w/editing/`
 
 Representative paper drafting validation artifacts now exist for the same fixture under:
 
-- `review/editing/papers/s44271-024-00170-w/`
+- `artifacts/papers/s44271-024-00170-w/editing/`
 
 ## Grant Review In One Glance
 
 Grant review is a 3-step flow:
 
-1. Fetch the grant call into `review/grants/<slug>/profile.json`
-2. Plan the review panel in `review/grants/<slug>/review-plan.json`
+1. Fetch the grant call into `artifacts/grants/<slug>/profile.json`
+2. Plan the review panel in `artifacts/grants/<slug>/review-plan.json`
 3. Review the proposal using that saved profile and review plan
 
 When you use `review-grant` with a profile, the review report is saved next to that profile using:
@@ -129,16 +149,16 @@ Claude Code example:
 
 ```text
 /fetch-grant-context "Google.org Impact Challenge AI for Science" slug=google-impact-challenge-ai-for-science mode=foundation
-/plan-grant-review foundation profile=review/grants/google-impact-challenge-ai-for-science/profile.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
-/review-grant foundation profile=review/grants/google-impact-challenge-ai-for-science/profile.json plan=review/grants/google-impact-challenge-ai-for-science/review-plan.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
+/plan-grant-review foundation profile=artifacts/grants/google-impact-challenge-ai-for-science/profile.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
+/review-grant foundation profile=artifacts/grants/google-impact-challenge-ai-for-science/profile.json plan=artifacts/grants/google-impact-challenge-ai-for-science/review-plan.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
 ```
 
 Codex example:
 
 ```text
 Use the AI Research Feedback plugin skill `fetch-grant-context` on "Google.org Impact Challenge AI for Science" with slug=google-impact-challenge-ai-for-science and mode=foundation.
-Use the AI Research Feedback plugin skill `plan-grant-review` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation and context from review/grants/google-impact-challenge-ai-for-science/profile.json.
-Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation, context from review/grants/google-impact-challenge-ai-for-science/profile.json, and plan from review/grants/google-impact-challenge-ai-for-science/review-plan.json.
+Use the AI Research Feedback plugin skill `plan-grant-review` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation and context from artifacts/grants/google-impact-challenge-ai-for-science/profile.json.
+Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation, context from artifacts/grants/google-impact-challenge-ai-for-science/profile.json, and plan from artifacts/grants/google-impact-challenge-ai-for-science/review-plan.json.
 ```
 
 ## Repo Structure
@@ -147,7 +167,7 @@ Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/goo
 - `plugins/ai-research-feedback/`: Codex plugin package
 - `.agents/plugins/marketplace.json`: repo-local Codex marketplace entry
 - `scripts/derive_codex_plugin_skills.py`: syncs canonical workflows into the plugin bundle
-- `review/grants/`: run-specific grant profiles and review plans
+- `artifacts/grants/`: run-specific grant profiles and review plans
 - `templates/grants/`: reusable grant schemas and expert-registry templates
 - `templates/editing/`: shared post-review editing artifact schemas
 
@@ -160,3 +180,4 @@ Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/goo
 - [docs/grant-review.md](docs/grant-review.md)
 - [docs/grant-review-planning.md](docs/grant-review-planning.md)
 - [docs/post-review-editing.md](docs/post-review-editing.md)
+- [docs/feedback-addressed-editing.md](docs/feedback-addressed-editing.md)

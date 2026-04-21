@@ -32,7 +32,7 @@ Supported journal personas:
 
 Output:
 
-- `review/papers/paper-review--<paper-slug>--YYYY-MM-DD.md`
+- `artifacts/papers/<source-slug>/review/paper-review--<paper-slug>--YYYY-MM-DD.md`
 
 ### `review-paper-light`
 
@@ -47,7 +47,7 @@ Examples:
 
 Output:
 
-- `review/papers/paper-light-review--<paper-slug>--YYYY-MM-DD.md`
+- `artifacts/papers/<source-slug>/review/paper-light-review--<paper-slug>--YYYY-MM-DD.md`
 
 ### `review-paper-code`
 
@@ -64,15 +64,15 @@ Examples:
 
 Output:
 
-- `review/code/paper-code-review--<subject-slug>--YYYY-MM-DD.md`
+- `artifacts/paper-code/<source-slug>/review/paper-code-review--<subject-slug>--YYYY-MM-DD.md`
 
 ## Output Rule
 
 Paper review outputs are deterministic:
 
-- `review-paper` -> `review/papers/paper-review--<paper-slug>--YYYY-MM-DD.md`
-- `review-paper-light` -> `review/papers/paper-light-review--<paper-slug>--YYYY-MM-DD.md`
-- `review-paper-code` -> `review/code/paper-code-review--<subject-slug>--YYYY-MM-DD.md`
+- `review-paper` -> `artifacts/papers/<paper-slug>/review/paper-review--YYYY-MM-DD.md`
+- `review-paper-light` -> `artifacts/papers/<paper-slug>/review/paper-light-review--YYYY-MM-DD.md`
+- `review-paper-code` -> `artifacts/paper-code/<subject-slug>/review/paper-code-review--YYYY-MM-DD.md`
 
 If a filename already exists, the workflow appends `-v2`, `-v3`, and so on.
 

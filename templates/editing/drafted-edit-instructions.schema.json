@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Drafted Edit Instructions",
+  "description": "Paste-ready post-review edit instructions derived from a contextualized edit plan for a single source document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_version",
+    "document_type",
+    "source_document_path",
+    "contextualized_edit_plan_path",
+    "generated_at",
+    "drafting_notes",
+    "edit_instructions"
+  ],
+  "properties": {
+    "artifact_version": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "grant",
+        "paper",
+        "pap",
+        "paper-code"
+      ]
+    },
+    "source_document_path": {
+      "type": "string"
+    },
+    "contextualized_edit_plan_path": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "drafting_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "edit_instructions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "priority",
+          "location",
+          "editorial_judgment",
+          "action_type",
+          "edit_instruction",
+          "source_text",
+          "replacement_text",
+          "word_count_check",
+          "constraint_checks",
+          "provenance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "location": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "section"
+            ],
+            "properties": {
+              "section": {
+                "type": "string"
+              },
+              "heading_match": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "paragraph_hint": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_path": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "editorial_judgment": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "rationale",
+              "review_suggestion_addressed",
+              "human_decision_needed"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "accept",
+                  "partial",
+                  "reject",
+                  "verify"
+                ]
+              },
+              "rationale": {
+                "type": "string"
+              },
+              "review_suggestion_addressed": {
+                "type": "string"
+              },
+              "human_decision_needed": {
+                "type": "boolean"
+              }
+            }
+          },
+          "action_type": {
+            "type": "string",
+            "enum": [
+              "insert",
+              "replace",
+              "delete",
+              "compress",
+              "reconcile",
+              "verify"
+            ]
+          },
+          "edit_instruction": {
+            "type": "string"
+          },
+          "source_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "replacement_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "word_count_check": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "limit",
+              "unit",
+              "replacement_count",
+              "within_limit",
+              "notes"
+            ],
+            "properties": {
+              "limit": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "words",
+                  "characters",
+                  "unknown"
+                ]
+              },
+              "replacement_count": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "within_limit": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "notes": {
+                "type": "string"
+              }
+            }
+          },
+          "constraint_checks": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "contextualized_target_id",
+              "contextualized_edit_plan_path",
+              "revision_plan_path",
+              "writing_constraints_path",
+              "source_evidence"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

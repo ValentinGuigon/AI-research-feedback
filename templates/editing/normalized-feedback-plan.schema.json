@@ -1,0 +1,549 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Normalized Feedback Plan",
+  "description": "Normalized feedback items and selected revision targets derived from feedback-bearing sources before downstream editing stages.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_version",
+    "document_type",
+    "source_document_path",
+    "generated_at",
+    "feedback_sources",
+    "selection",
+    "feedback_items",
+    "normalized_revision_targets",
+    "downstream_mapping"
+  ],
+  "properties": {
+    "artifact_version": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "grant",
+        "paper",
+        "pap",
+        "paper-code"
+      ]
+    },
+    "source_document_path": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "feedback_guideline_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "feedback_sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "source_type",
+          "source_path"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "docx-comment",
+              "pdf-annotation",
+              "review-report",
+              "inline-note",
+              "direct-user-instruction"
+            ]
+          },
+          "source_path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "adapter_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "adapter_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "selected_feedback_ids",
+        "selector"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "single",
+            "subset",
+            "all"
+          ]
+        },
+        "selected_feedback_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "selector": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "description"
+          ],
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "criteria": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "feedback_items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "source_id",
+          "source_type",
+          "feedback_text",
+          "anchor",
+          "location_confidence",
+          "selected",
+          "guideline_appraisal",
+          "provenance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "source_id": {
+            "type": "string"
+          },
+          "source_specific_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "docx-comment",
+              "pdf-annotation",
+              "review-report",
+              "inline-note",
+              "direct-user-instruction"
+            ]
+          },
+          "author_or_origin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "feedback_text": {
+            "type": "string"
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "anchor": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_text",
+              "surrounding_text",
+              "section_hint",
+              "anchor_recovery_notes"
+            ],
+            "properties": {
+              "source_text": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "surrounding_text": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "section_hint": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "heading_hint": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "paragraph_hint": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "page_hint": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "coordinate_hint": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": true
+              },
+              "anchor_recovery_notes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "location_confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low",
+              "unknown"
+            ]
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "guideline_appraisal": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "state",
+              "rationale",
+              "human_decision_needed"
+            ],
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "accept",
+                  "partial",
+                  "reject",
+                  "verify"
+                ]
+              },
+              "rationale": {
+                "type": "string"
+              },
+              "guideline_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "human_decision_needed": {
+                "type": "boolean"
+              }
+            }
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "source_path",
+              "source_type"
+            ],
+            "properties": {
+              "source_path": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_type": {
+                "type": "string"
+              },
+              "extraction_notes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "normalized_revision_targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "feedback_item_ids",
+          "priority",
+          "issue",
+          "edit_intent",
+          "motivation",
+          "source_evidence",
+          "candidate_locations",
+          "guideline_appraisal_state"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "feedback_item_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "issue": {
+            "type": "string"
+          },
+          "edit_intent": {
+            "type": "string",
+            "enum": [
+              "add",
+              "clarify",
+              "qualify",
+              "restructure",
+              "compress",
+              "remove",
+              "align",
+              "verify"
+            ]
+          },
+          "motivation": {
+            "type": "string"
+          },
+          "source_evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "feedback_item_id",
+                "quote_or_summary"
+              ],
+              "properties": {
+                "feedback_item_id": {
+                  "type": "string"
+                },
+                "source_path": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "quote_or_summary": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "candidate_locations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "reason"
+              ],
+              "properties": {
+                "section_hint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "heading_hint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "paragraph_hint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "location_confidence": {
+                  "type": "string",
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low",
+                    "unknown"
+                  ]
+                }
+              }
+            }
+          },
+          "guideline_appraisal_state": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "partial",
+              "reject",
+              "verify"
+            ]
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "downstream_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recommended_path",
+        "writing_constraints_required",
+        "contextualization_required",
+        "drafting_required",
+        "target_id_map"
+      ],
+      "properties": {
+        "recommended_path": {
+          "type": "string",
+          "enum": [
+            "emit-compatible-revision-plan",
+            "consume-normalized-feedback-plan-directly"
+          ]
+        },
+        "compatible_revision_plan_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "writing_constraints_required": {
+          "type": "boolean"
+        },
+        "contextualization_required": {
+          "type": "boolean"
+        },
+        "drafting_required": {
+          "type": "boolean"
+        },
+        "target_id_map": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "feedback_target_id",
+              "revision_target_id"
+            ],
+            "properties": {
+              "feedback_target_id": {
+                "type": "string"
+              },
+              "revision_target_id": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "provenance_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -118,6 +118,7 @@ The editing pipeline should be driven by explicit artifacts, not only transient 
 
 The minimum planned artifacts are:
 
+- a normalized feedback plan artifact for feedback-addressed workflows
 - a revision plan artifact
 - a writing constraints artifact
 - a contextualized edit plan artifact
@@ -125,9 +126,26 @@ The minimum planned artifacts are:
 
 Canonical schemas for these artifacts now live under `templates/editing/`:
 
+- `templates/editing/normalized-feedback-plan.schema.json`
 - `templates/editing/revision-plan.schema.json`
 - `templates/editing/writing-constraints.schema.json`
 - `templates/editing/contextualized-edit-plan.schema.json`
+- `templates/editing/drafted-edit-instructions.schema.json`
+
+### Feedback-Addressed Editing Entry Layer
+
+Generalized feedback-addressed editing is specified separately in `docs/feedback-addressed-editing.md`.
+
+That architecture treats DOCX comments, PDF annotations, review reports, inline notes, and direct user instructions as adapter inputs into a shared `normalized-feedback-plan.json` contract. The normalized feedback layer supports single, subset, and all-feedback selection modes, records guideline appraisal states, and then maps selected feedback into revision-plan-compatible targets.
+
+The downstream post-review editing stages remain unchanged: writing constraints are still loaded explicitly, object-specific contextualizers still decide source-local placement, and drafting stages still emit human-applied edit instructions rather than rewriting source documents directly.
+
+The first implemented feedback-addressed planning path is:
+
+- `Skills/plan-feedback-revisions.md`
+- `Skills/convert-feedback-plan-to-revision-plan.md`
+
+`plan-feedback-revisions` defines the DOCX-comment adapter path into `normalized-feedback-plan.json`, with representative validation artifacts for `single` and `all` comment selection under `artifacts/grants/benrimoh-research-vision/editing/`. `convert-feedback-plan-to-revision-plan` bridges those normalized feedback artifacts into schema-compatible `revision-plan.json` and `revision-plan-v2.json` artifacts for the same fixture. Both stages stop before writing constraints, contextualization, drafting, tracked changes, or source-document rewriting. A separate bounded validation chain now demonstrates that the selected single-comment `FB2` revision plan can be consumed by the existing downstream grant editing stages while preserving `FB2`, DOCX comment id `1`, and `F1 -> R1` target continuity.
 
 ### Revision Plan Artifact
 
@@ -265,9 +283,23 @@ Suggested shape:
       "location": {
         "section": "Expected Outcomes"
       },
+      "editorial_judgment": {
+        "status": "accept|partial|reject|verify",
+        "rationale": "Why this review suggestion should be implemented, narrowed, rejected, or verified.",
+        "review_suggestion_addressed": "Concise summary of the review suggestion.",
+        "human_decision_needed": false
+      },
       "action_type": "insert",
-      "edit_instruction": "Add a concise near-term public-benefit sentence.",
-      "proposed_text": "Draft text when supported, or null when the action is deletion or verification.",
+      "edit_instruction": "In Q19a, replace the existing answer with the replacement text below.",
+      "source_text": "The current field text or enough exact source text to identify the field.",
+      "replacement_text": "Paste-ready replacement text, or null only for deletion, rejection, or verification actions.",
+      "word_count_check": {
+        "limit": 100,
+        "unit": "words",
+        "replacement_count": 74,
+        "within_limit": true,
+        "notes": "Recheck in the live form if its counter handles punctuation differently."
+      },
       "constraint_checks": [],
       "provenance": {}
     }
@@ -278,32 +310,40 @@ Suggested shape:
 Contract notes:
 
 - every drafted instruction must point back to the saved contextualized edit plan
-- `edit_instruction` is required even when `proposed_text` is `null`
-- `proposed_text` must not introduce unsupported new facts, methods, partners, budgets, outcomes, or claims
+- `edit_instruction` is required even when `replacement_text` is `null`
+- `editorial_judgment` is required so the editor records which review suggestions were accepted, narrowed, rejected, or left for factual verification
+- `source_text` should quote the exact current field text when available, or a uniquely identifying excerpt when the full field is long
+- `replacement_text` must be paste-ready for accepted or partially accepted text edits, except deletion-only edits
+- `word_count_check` is required for every instruction and must report the known field limit when available
+- `replacement_text` must not introduce unsupported new facts, methods, partners, budgets, outcomes, or claims
 - drafting artifacts propose human-applied edits and do not modify source documents directly
 
 ## Deterministic Output Locations
 
-Shared editing artifacts should save under `review/editing/` rather than next to the canonical skill or schema files.
+Shared editing artifacts should save under `artifacts/<object-folder>/<source-slug>/editing/` rather than next to the canonical skill or schema files.
 
 The deterministic layout is:
 
-- `review/editing/grants/<source-slug>/revision-plan.json`
-- `review/editing/grants/<source-slug>/writing-constraints.json`
-- `review/editing/grants/<source-slug>/contextualized-edit-plan.json`
-- `review/editing/grants/<source-slug>/drafted-edit-instructions.json`
-- `review/editing/papers/<source-slug>/revision-plan.json`
-- `review/editing/papers/<source-slug>/writing-constraints.json`
-- `review/editing/papers/<source-slug>/contextualized-edit-plan.json`
-- `review/editing/papers/<source-slug>/drafted-edit-instructions.json`
-- `review/editing/paps/<source-slug>/revision-plan.json`
-- `review/editing/paps/<source-slug>/writing-constraints.json`
-- `review/editing/paps/<source-slug>/contextualized-edit-plan.json`
-- `review/editing/paps/<source-slug>/drafted-edit-instructions.json`
-- `review/editing/paper-code/<source-slug>/revision-plan.json`
-- `review/editing/paper-code/<source-slug>/writing-constraints.json`
-- `review/editing/paper-code/<source-slug>/contextualized-edit-plan.json`
-- `review/editing/paper-code/<source-slug>/drafted-edit-instructions.json`
+- `artifacts/grants/<source-slug>/editing/normalized-feedback-plan.json`
+- `artifacts/grants/<source-slug>/editing/revision-plan.json`
+- `artifacts/grants/<source-slug>/editing/writing-constraints.json`
+- `artifacts/grants/<source-slug>/editing/contextualized-edit-plan.json`
+- `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/papers/<source-slug>/editing/normalized-feedback-plan.json`
+- `artifacts/papers/<source-slug>/editing/revision-plan.json`
+- `artifacts/papers/<source-slug>/editing/writing-constraints.json`
+- `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json`
+- `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/paps/<source-slug>/editing/normalized-feedback-plan.json`
+- `artifacts/paps/<source-slug>/editing/revision-plan.json`
+- `artifacts/paps/<source-slug>/editing/writing-constraints.json`
+- `artifacts/paps/<source-slug>/editing/contextualized-edit-plan.json`
+- `artifacts/paps/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/paper-code/<source-slug>/editing/normalized-feedback-plan.json`
+- `artifacts/paper-code/<source-slug>/editing/revision-plan.json`
+- `artifacts/paper-code/<source-slug>/editing/writing-constraints.json`
+- `artifacts/paper-code/<source-slug>/editing/contextualized-edit-plan.json`
+- `artifacts/paper-code/<source-slug>/editing/drafted-edit-instructions.json`
 
 Naming rules:
 
@@ -407,6 +447,8 @@ For this reason, `load-writing-constraints` is not optional architecture. It is 
 
 The canonical shared-stage workflow specifications now live in:
 
+- `Skills/plan-feedback-revisions.md`
+- `Skills/convert-feedback-plan-to-revision-plan.md`
 - `Skills/plan-revisions.md`
 - `Skills/load-writing-constraints.md`
 - `Skills/contextualize-revisions-grant.md`
@@ -417,7 +459,7 @@ The canonical shared-stage workflow specifications now live in:
 These are specification-layer contracts for:
 
 - required inputs
-- deterministic output paths under `review/editing/`
+- deterministic output paths under `artifacts/<object-folder>/<source-slug>/editing/`
 - schema conformance requirements
 - provenance and normalization rules
 - explicit non-scope boundaries that keep shared stages separate from object-specific contextualization and drafting
@@ -438,7 +480,7 @@ The first object-specific contextualization workflow now lives in:
 
 It consumes saved `revision-plan.json` and `writing-constraints.json` artifacts for one grant source document and emits:
 
-- `review/editing/grants/<source-slug>/contextualized-edit-plan.json`
+- `artifacts/grants/<source-slug>/editing/contextualized-edit-plan.json`
 
 The grant contextualizer localizes revision targets to grant-facing sections, records constraint checks, and preserves review evidence. It intentionally stops before drafting replacement text. Plugin-bundled copies for the paper contextualizer and PAP or paper-code contextualizers are not yet implemented.
 
@@ -450,9 +492,11 @@ The first object-specific drafting workflow now lives in:
 
 It consumes a saved grant `contextualized-edit-plan.json` and emits:
 
-- `review/editing/grants/<source-slug>/drafted-edit-instructions.json`
+- `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
 
 The grant drafter turns contextualized targets into human-applied edit instructions, with bounded proposed text where the existing artifact evidence supports wording. It does not rewrite the source grant file directly. Plugin-bundled copies and non-grant drafting skills are not yet implemented.
+
+For grant applications, the expected user-facing output is not a parallel rewritten proposal. It is a replacement manual: for each grant prompt or paragraph, the editor should state what review suggestion it is acting on, whether that suggestion is accepted or rejected, what exact current text is being replaced when recoverable, what exact replacement should be pasted, and whether the replacement stays inside the known word or character limit.
 
 ## First Paper Contextualization Path
 
@@ -462,11 +506,11 @@ The first paper-specific contextualization workflow now lives in:
 
 It consumes saved paper `revision-plan.json` and `writing-constraints.json` artifacts for one source manuscript and emits:
 
-- `review/editing/papers/<source-slug>/contextualized-edit-plan.json`
+- `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json`
 
 The paper contextualizer localizes revision targets to manuscript-facing sections, records constraint checks, and preserves review evidence. It intentionally stops before drafting replacement text. The representative validation path uses the local Communications Psychology fixture under:
 
-- `review/editing/papers/s44271-024-00170-w/`
+- `artifacts/papers/s44271-024-00170-w/editing/`
 
 Paper drafting is handled by a separate downstream workflow. Plugin-bundled copies, PAP contextualizers, and paper-code contextualizers are not yet implemented.
 
@@ -478,11 +522,11 @@ The first paper-specific drafting workflow now lives in:
 
 It consumes a saved paper `contextualized-edit-plan.json` and emits:
 
-- `review/editing/papers/<source-slug>/drafted-edit-instructions.json`
+- `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
 
 The paper drafter turns contextualized manuscript targets into human-applied edit instructions for claim qualification, methods clarity, results/discussion alignment, and venue-facing framing. It does not rewrite the source manuscript directly. The representative validation path uses:
 
-- `review/editing/papers/s44271-024-00170-w/drafted-edit-instructions.json`
+- `artifacts/papers/s44271-024-00170-w/editing/drafted-edit-instructions.json`
 
 Plugin-bundled copies, PAP drafting, and paper-code drafting are not yet implemented.
 
@@ -529,6 +573,7 @@ At the current phase state:
 - review workflows already exist
 - grant review planning already exists
 - canonical shared-stage specs now exist for:
+  - `plan-feedback-revisions`
   - `plan-revisions`
   - `load-writing-constraints`
 - canonical grant contextualization now exists for:
@@ -539,9 +584,12 @@ At the current phase state:
   - `contextualize-revisions-paper`
 - canonical paper drafting now exists for:
   - `draft-edits-paper`
-- representative shared-stage runtime artifacts now exist for one grant validation path under `review/editing/grants/google-impact-challenge-ai-for-science-application-1/`
+- representative shared-stage runtime artifacts now exist for one grant validation path under `artifacts/grants/google-impact-challenge-ai-for-science-application/editing/`
+- representative DOCX-comment normalized feedback artifacts now exist under `artifacts/grants/benrimoh-research-vision/editing/`
+- representative DOCX-comment compatibility revision-plan artifacts now exist under `artifacts/grants/benrimoh-research-vision/editing/`
+- representative feedback-derived downstream validation artifacts for the Benrimoh single-comment `FB2` path now exist under `artifacts/grants/benrimoh-research-vision/editing/`
 - representative grant contextualization runtime evidence now exists for that same validation path
 - representative grant drafting runtime evidence now exists for that same validation path
-- representative paper contextualization runtime evidence now exists under `review/editing/papers/s44271-024-00170-w/`
-- representative paper drafting runtime evidence now exists under `review/editing/papers/s44271-024-00170-w/`
+- representative paper contextualization runtime evidence now exists under `artifacts/papers/s44271-024-00170-w/editing/`
+- representative paper drafting runtime evidence now exists under `artifacts/papers/s44271-024-00170-w/editing/`
 - PAP editing and paper-code editing skills are not yet implemented

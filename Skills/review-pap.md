@@ -67,7 +67,7 @@ Before launching agents, resolve a deterministic output directory and filename.
 
 Directory rules:
 
-- Save PAP reviews under `review/paps/`.
+- Save PAP reviews under `artifacts/paps/<source-slug>/review/`.
 
 Filename rules:
 

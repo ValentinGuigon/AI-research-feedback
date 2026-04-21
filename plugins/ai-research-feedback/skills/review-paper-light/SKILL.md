@@ -83,7 +83,7 @@ Before launching agents, resolve a deterministic output directory and filename.
 
 Directory rules:
 
-- Save quick paper reviews under `review/papers/`.
+- Save quick paper reviews under `artifacts/papers/<source-slug>/review/`.
 
 Filename rules:
 

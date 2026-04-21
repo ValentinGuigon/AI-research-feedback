@@ -37,7 +37,7 @@ Resolution rules:
 
 1. If `out=<path>` is provided, use that exact directory.
 2. Otherwise, create the profile under:
-   - `review/grants/<slug>/`
+   - `artifacts/grants/<slug>/`
 3. If `slug=<slug>` is not provided, derive a slug from the grant/program name or source title:
    - lowercase
    - letters, numbers, and hyphens only

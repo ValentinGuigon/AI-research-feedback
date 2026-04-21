@@ -126,7 +126,7 @@ Carry forward:
 
 Save under the same deterministic paper editing directory as the contextualized plan:
 
-- `review/editing/papers/<source-slug>/drafted-edit-instructions.json`
+- `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
 
 Derive `<source-slug>` from the source document filename:
 
@@ -164,7 +164,7 @@ Before reporting success:
 1. Re-open the saved file and verify it parses as JSON.
 2. Confirm `document_type` is `paper`.
 3. Confirm `contextualized_edit_plan_path` points to the saved contextualized plan used for the run.
-4. Confirm the output path follows `review/editing/papers/<source-slug>/drafted-edit-instructions.json` or the documented `-vN` rule.
+4. Confirm the output path follows `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json` or the documented `-vN` rule.
 5. Confirm `edit_instructions` is non-empty.
 6. Confirm every instruction contains location, action type, executable instruction text, constraint checks, and provenance.
 7. Confirm no instruction claims to have modified the source document directly.

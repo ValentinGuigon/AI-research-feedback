@@ -152,7 +152,7 @@ Before launching agents, resolve a deterministic output directory and filename.
 
 Directory rules:
 
-- Save full paper reviews under `review/papers/`.
+- Save full paper reviews under `artifacts/papers/<source-slug>/review/`.
 
 Filename rules:
 

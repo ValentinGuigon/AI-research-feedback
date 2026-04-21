@@ -18,16 +18,16 @@ If you skip step 2, `review-grant` should fall back to a default standing panel 
 
 ```text
 /fetch-grant-context https://example.org/call-page slug=my-call mode=foundation
-/plan-grant-review foundation profile=review/grants/my-call/profile.json path/to/proposal.pdf
-/review-grant foundation profile=review/grants/my-call/profile.json plan=review/grants/my-call/review-plan.json path/to/proposal.pdf
+/plan-grant-review foundation profile=artifacts/grants/my-call/profile.json path/to/proposal.pdf
+/review-grant foundation profile=artifacts/grants/my-call/profile.json plan=artifacts/grants/my-call/review-plan.json path/to/proposal.pdf
 ```
 
 ### Codex
 
 ```text
 Use the AI Research Feedback plugin skill `fetch-grant-context` on https://example.org/call-page with slug=my-call and mode=foundation.
-Use the AI Research Feedback plugin skill `plan-grant-review` on path/to/proposal.pdf with mode=foundation and context from review/grants/my-call/profile.json.
-Use the AI Research Feedback plugin skill `review-grant` on path/to/proposal.pdf with mode=foundation, context from review/grants/my-call/profile.json, and plan from review/grants/my-call/review-plan.json.
+Use the AI Research Feedback plugin skill `plan-grant-review` on path/to/proposal.pdf with mode=foundation and context from artifacts/grants/my-call/profile.json.
+Use the AI Research Feedback plugin skill `review-grant` on path/to/proposal.pdf with mode=foundation, context from artifacts/grants/my-call/profile.json, and plan from artifacts/grants/my-call/review-plan.json.
 ```
 
 ## Google.org Example
@@ -42,24 +42,24 @@ then the intended pattern is:
 
 ```text
 /fetch-grant-context "Google.org Impact Challenge AI for Science" slug=google-impact-challenge-ai-for-science mode=foundation
-/plan-grant-review foundation profile=review/grants/google-impact-challenge-ai-for-science/profile.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
-/review-grant foundation profile=review/grants/google-impact-challenge-ai-for-science/profile.json plan=review/grants/google-impact-challenge-ai-for-science/review-plan.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
+/plan-grant-review foundation profile=artifacts/grants/google-impact-challenge-ai-for-science/profile.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
+/review-grant foundation profile=artifacts/grants/google-impact-challenge-ai-for-science/profile.json plan=artifacts/grants/google-impact-challenge-ai-for-science/review-plan.json ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf
 ```
 
 ### Codex
 
 ```text
 Use the AI Research Feedback plugin skill `fetch-grant-context` on "Google.org Impact Challenge AI for Science" with slug=google-impact-challenge-ai-for-science and mode=foundation.
-Use the AI Research Feedback plugin skill `plan-grant-review` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation and context from review/grants/google-impact-challenge-ai-for-science/profile.json.
-Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation, context from review/grants/google-impact-challenge-ai-for-science/profile.json, and plan from review/grants/google-impact-challenge-ai-for-science/review-plan.json.
+Use the AI Research Feedback plugin skill `plan-grant-review` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation and context from artifacts/grants/google-impact-challenge-ai-for-science/profile.json.
+Use the AI Research Feedback plugin skill `review-grant` on ./tests/fixtures/google_org/Google Impact Challenge_ AI for Science application.pdf with mode=foundation, context from artifacts/grants/google-impact-challenge-ai-for-science/profile.json, and plan from artifacts/grants/google-impact-challenge-ai-for-science/review-plan.json.
 ```
 
 ## What Each Step Produces
 
 `fetch-grant-context` writes:
 
-- `review/grants/<slug>/profile.json`
-- `review/grants/<slug>/sources.md`
+- `artifacts/grants/<slug>/profile.json`
+- `artifacts/grants/<slug>/sources.md`
 
 Framework templates live under:
 
@@ -67,7 +67,7 @@ Framework templates live under:
 
 `plan-grant-review` writes:
 
-- `review/grants/<slug>/review-plan.json`
+- `artifacts/grants/<slug>/review-plan.json`
 
 `review-grant` reads:
 
@@ -79,7 +79,7 @@ Framework templates live under:
 `review-grant` writes:
 
 - if a profile is provided: the report is saved next to that `profile.json`
-- otherwise: the report is saved under `review/`
+- otherwise: the report is saved under `artifacts/grants/<proposal-slug>/review/`
 - filename pattern: `grant-review--<proposal-slug>--YYYY-MM-DD.md`
 
 ## Workflows
@@ -111,8 +111,8 @@ Optional arguments:
 
 Output:
 
-- `review/grants/<slug>/profile.json`
-- `review/grants/<slug>/sources.md`
+- `artifacts/grants/<slug>/profile.json`
+- `artifacts/grants/<slug>/sources.md`
 
 ### `plan-grant-review`
 
@@ -123,8 +123,8 @@ Examples:
 ```text
 /plan-grant-review
 /plan-grant-review foundation
-/plan-grant-review profile=review/grants/my-call/profile.json path/to/proposal.pdf
-/plan-grant-review foundation profile=review/grants/my-call/profile.json mode=standard path/to/proposal.pdf
+/plan-grant-review profile=artifacts/grants/my-call/profile.json path/to/proposal.pdf
+/plan-grant-review foundation profile=artifacts/grants/my-call/profile.json mode=standard path/to/proposal.pdf
 ```
 
 Accepted arguments:
@@ -138,7 +138,7 @@ Accepted arguments:
 Output:
 
 - if a profile is provided: `<profile-dir>/review-plan.json`
-- otherwise: `review/review-plan--<proposal-slug>--YYYY-MM-DD.json`
+- otherwise: `artifacts/grants/<proposal-slug>/review/review-plan--YYYY-MM-DD.json`
 
 ### `review-grant`
 
@@ -149,8 +149,8 @@ Examples:
 ```text
 /review-grant
 /review-grant NSF
-/review-grant profile=review/grants/my-call/profile.json path/to/proposal.pdf
-/review-grant foundation profile=review/grants/my-call/profile.json plan=review/grants/my-call/review-plan.json path/to/proposal.pdf
+/review-grant profile=artifacts/grants/my-call/profile.json path/to/proposal.pdf
+/review-grant foundation profile=artifacts/grants/my-call/profile.json plan=artifacts/grants/my-call/review-plan.json path/to/proposal.pdf
 /review-grant NIH path/to/proposal.pdf
 ```
 
@@ -187,7 +187,7 @@ Supporting files it can inspect:
 Output:
 
 - if a profile is provided: `<profile-dir>/grant-review--<proposal-slug>--YYYY-MM-DD.md`
-- otherwise: `review/grant-review--<proposal-slug>--YYYY-MM-DD.md`
+- otherwise: `artifacts/grants/<proposal-slug>/review/grant-review--YYYY-MM-DD.md`
 
 ## Rule of Thumb
 
@@ -200,5 +200,5 @@ Use this pattern:
 Template:
 
 ```text
-fetch-grant-context -> review/grants/<slug>/profile.json -> plan-grant-review -> review/grants/<slug>/review-plan.json -> review-grant
+fetch-grant-context -> artifacts/grants/<slug>/profile.json -> plan-grant-review -> artifacts/grants/<slug>/review-plan.json -> review-grant
 ```

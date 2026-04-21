@@ -277,7 +277,7 @@ Otherwise:
    - lowercase
    - remove extension
    - letters, numbers, and hyphens only
-2. Save under `review/` as:
+2. Save under `artifacts/grants/<proposal-slug>/review/` as:
    - `review-plan--<proposal-slug>--YYYY-MM-DD.json`
 
 Use absolute paths internally. Save the artifact at the deterministic path required by the applicable rule above.

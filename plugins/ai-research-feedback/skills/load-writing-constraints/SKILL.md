@@ -235,12 +235,12 @@ At least one `constraint_sources` entry is required.
 
 ## Phase 6: Resolve Deterministic Output Path
 
-Save under `review/editing/` using the normalized object folder for `DOCUMENT_TYPE`:
+Save under `artifacts/` using the normalized object folder for `DOCUMENT_TYPE` and the `editing` stage folder:
 
-- `grant` -> `review/editing/grants/`
-- `paper` -> `review/editing/papers/`
-- `pap` -> `review/editing/paps/`
-- `paper-code` -> `review/editing/paper-code/`
+- `grant` -> `artifacts/grants/<source-slug>/editing/`
+- `paper` -> `artifacts/papers/<source-slug>/editing/`
+- `pap` -> `artifacts/paps/<source-slug>/editing/`
+- `paper-code` -> `artifacts/paper-code/<source-slug>/editing/`
 
 Derive `<source-slug>` from the source document filename:
 
@@ -251,7 +251,7 @@ Derive `<source-slug>` from the source document filename:
 
 Default output path:
 
-- `review/editing/<object-folder>/<source-slug>/writing-constraints.json`
+- `artifacts/<object-folder>/<source-slug>/editing/writing-constraints.json`
 
 If that file already exists and should be preserved, append `-v2`, `-v3`, and so on to the filename.
 

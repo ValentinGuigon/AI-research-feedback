@@ -48,7 +48,7 @@ Resolution rules:
 
 1. Resolve all supplied paths to absolute local paths.
 2. If `source=` is absent, infer the source path from the remaining path-like token or stop and report that a source document is required.
-3. If no review path is supplied, search under `review/` for likely review artifacts tied to the source slug and stop if none are found.
+3. If no review path is supplied, search under `artifacts/` for likely review artifacts tied to the source slug and stop if none are found.
 4. If `type=` is supplied, use it as `DOCUMENT_TYPE`.
 5. If `type=` is absent, infer `DOCUMENT_TYPE` from the source path and neighboring review directory names using only:
    - `grant`
@@ -238,12 +238,12 @@ Do not use `plan_notes` as a dumping ground for full review summaries.
 
 ## Phase 7: Resolve Deterministic Output Path
 
-Save under `review/editing/` using the normalized object folder for `DOCUMENT_TYPE`:
+Save under `artifacts/` using the normalized object folder for `DOCUMENT_TYPE` and the `editing` stage folder:
 
-- `grant` -> `review/editing/grants/`
-- `paper` -> `review/editing/papers/`
-- `pap` -> `review/editing/paps/`
-- `paper-code` -> `review/editing/paper-code/`
+- `grant` -> `artifacts/grants/<source-slug>/editing/`
+- `paper` -> `artifacts/papers/<source-slug>/editing/`
+- `pap` -> `artifacts/paps/<source-slug>/editing/`
+- `paper-code` -> `artifacts/paper-code/<source-slug>/editing/`
 
 Derive `<source-slug>` from the source document filename:
 
@@ -254,7 +254,7 @@ Derive `<source-slug>` from the source document filename:
 
 Default output path:
 
-- `review/editing/<object-folder>/<source-slug>/revision-plan.json`
+- `artifacts/<object-folder>/<source-slug>/editing/revision-plan.json`
 
 If that file already exists and should be preserved, append `-v2`, `-v3`, and so on to the filename.
 

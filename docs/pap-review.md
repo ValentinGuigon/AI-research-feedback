@@ -44,7 +44,7 @@ Supporting files it can inspect:
 
 Output:
 
-- `review/paps/pap-review--<pap-slug>--YYYY-MM-DD.md`
+- `artifacts/paps/<source-slug>/review/pap-review--<pap-slug>--YYYY-MM-DD.md`
 
 If that filename already exists, the workflow appends `-v2`, `-v3`, and so on.
 

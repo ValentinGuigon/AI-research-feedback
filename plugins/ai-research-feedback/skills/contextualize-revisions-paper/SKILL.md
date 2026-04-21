@@ -151,7 +151,7 @@ Each contextualized target must include at least one constraint check. Prefer ch
 
 Save under the same deterministic paper editing directory as the shared-stage artifacts:
 
-- `review/editing/papers/<source-slug>/contextualized-edit-plan.json`
+- `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json`
 
 Derive `<source-slug>` from the source document filename:
 
@@ -192,7 +192,7 @@ Before reporting success:
 2. Manually confirm that all top-level required fields from `templates/editing/contextualized-edit-plan.schema.json` are present.
 3. Confirm `document_type` is `paper`.
 4. Confirm `revision_plan_path` and `writing_constraints_path` point to the saved shared-stage artifacts used for this run.
-5. Confirm the output path follows `review/editing/papers/<source-slug>/contextualized-edit-plan.json` or the documented `-vN` rule.
+5. Confirm the output path follows `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json` or the documented `-vN` rule.
 6. Confirm `revision_targets` is non-empty.
 7. Confirm every target contains location data, a suggestion, motivation, non-empty `constraint_checks`, and non-empty `source_evidence`.
 8. Confirm no target drafts replacement text or rewrites the source document directly.

@@ -191,7 +191,7 @@ Before launching agents, resolve a deterministic output directory and filename.
 Directory rules:
 
 - If `GRANT_PROFILE_PATH` is present, save the report in the same directory as that `profile.json`.
-- Otherwise, save the report under `review/`.
+- Otherwise, save the report under `artifacts/grants/<proposal-slug>/review/`.
 
 Filename rules:
 
