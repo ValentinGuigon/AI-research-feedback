@@ -55,12 +55,14 @@ Use the AI Research Feedback plugin skill `review-paper` on ./paper/my-paper-to-
 - `load-writing-constraints`: shared writing-constraint extraction for revision passes
 - `contextualize-revisions-grant`: grant-specific post-review contextualization from saved editing artifacts
 - `draft-edits-grant`: grant-specific drafted edit instructions from a saved contextualized edit plan
+- `contextualize-revisions-paper`: paper-specific post-review contextualization from saved editing artifacts
+- `draft-edits-paper`: paper-specific drafted edit instructions from a saved contextualized edit plan
 
 Planned next layer:
 
 - post-review editing as a staged architecture, documented in `docs/post-review-editing.md`
 - shared editing schemas under `templates/editing/`
-- non-grant contextualization and drafting workflow specs for papers, PAPs, and paper-code packages
+- PAP or paper-code editing workflow specs
 
 ## Output Locations
 
@@ -96,10 +98,20 @@ Shared post-review editing stages now specified:
 - `load-writing-constraints` -> `review/editing/<object-folder>/<source-slug>/writing-constraints.json`
 - `contextualize-revisions-grant` -> `review/editing/grants/<source-slug>/contextualized-edit-plan.json`
 - `draft-edits-grant` -> `review/editing/grants/<source-slug>/drafted-edit-instructions.json`
+- `contextualize-revisions-paper` -> `review/editing/papers/<source-slug>/contextualized-edit-plan.json`
+- `draft-edits-paper` -> `review/editing/papers/<source-slug>/drafted-edit-instructions.json`
 
 Representative runtime validation artifacts now exist for the Google.org grant fixture under:
 
 - `review/editing/grants/google-impact-challenge-ai-for-science-application-1/`
+
+Representative paper contextualization validation artifacts now exist for the Communications Psychology paper fixture under:
+
+- `review/editing/papers/s44271-024-00170-w/`
+
+Representative paper drafting validation artifacts now exist for the same fixture under:
+
+- `review/editing/papers/s44271-024-00170-w/`
 
 ## Grant Review In One Glance
 

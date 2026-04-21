@@ -411,6 +411,8 @@ The canonical shared-stage workflow specifications now live in:
 - `Skills/load-writing-constraints.md`
 - `Skills/contextualize-revisions-grant.md`
 - `Skills/draft-edits-grant.md`
+- `Skills/contextualize-revisions-paper.md`
+- `Skills/draft-edits-paper.md`
 
 These are specification-layer contracts for:
 
@@ -426,7 +428,7 @@ They now also encode the shared runtime fallback behavior needed for bounded exe
 - deterministic `-vN` versioning when an artifact must be preserved
 - explicit fallback behavior when direct source extraction is unavailable locally
 
-They do not claim that plugin sync or non-grant object-specific editing paths are already implemented.
+They do not claim that plugin sync, PAP editing, or paper-code editing paths are already implemented.
 
 ## First Grant Contextualization Path
 
@@ -438,7 +440,7 @@ It consumes saved `revision-plan.json` and `writing-constraints.json` artifacts 
 
 - `review/editing/grants/<source-slug>/contextualized-edit-plan.json`
 
-The grant contextualizer localizes revision targets to grant-facing sections, records constraint checks, and preserves review evidence. It intentionally stops before drafting replacement text. Plugin-bundled copies and non-grant contextualizers are not yet implemented.
+The grant contextualizer localizes revision targets to grant-facing sections, records constraint checks, and preserves review evidence. It intentionally stops before drafting replacement text. Plugin-bundled copies for the paper contextualizer and PAP or paper-code contextualizers are not yet implemented.
 
 ## First Grant Drafting Path
 
@@ -451,6 +453,38 @@ It consumes a saved grant `contextualized-edit-plan.json` and emits:
 - `review/editing/grants/<source-slug>/drafted-edit-instructions.json`
 
 The grant drafter turns contextualized targets into human-applied edit instructions, with bounded proposed text where the existing artifact evidence supports wording. It does not rewrite the source grant file directly. Plugin-bundled copies and non-grant drafting skills are not yet implemented.
+
+## First Paper Contextualization Path
+
+The first paper-specific contextualization workflow now lives in:
+
+- `Skills/contextualize-revisions-paper.md`
+
+It consumes saved paper `revision-plan.json` and `writing-constraints.json` artifacts for one source manuscript and emits:
+
+- `review/editing/papers/<source-slug>/contextualized-edit-plan.json`
+
+The paper contextualizer localizes revision targets to manuscript-facing sections, records constraint checks, and preserves review evidence. It intentionally stops before drafting replacement text. The representative validation path uses the local Communications Psychology fixture under:
+
+- `review/editing/papers/s44271-024-00170-w/`
+
+Paper drafting is handled by a separate downstream workflow. Plugin-bundled copies, PAP contextualizers, and paper-code contextualizers are not yet implemented.
+
+## First Paper Drafting Path
+
+The first paper-specific drafting workflow now lives in:
+
+- `Skills/draft-edits-paper.md`
+
+It consumes a saved paper `contextualized-edit-plan.json` and emits:
+
+- `review/editing/papers/<source-slug>/drafted-edit-instructions.json`
+
+The paper drafter turns contextualized manuscript targets into human-applied edit instructions for claim qualification, methods clarity, results/discussion alignment, and venue-facing framing. It does not rewrite the source manuscript directly. The representative validation path uses:
+
+- `review/editing/papers/s44271-024-00170-w/drafted-edit-instructions.json`
+
+Plugin-bundled copies, PAP drafting, and paper-code drafting are not yet implemented.
 
 ## Recommended User-Facing Shape
 
@@ -501,7 +535,13 @@ At the current phase state:
   - `contextualize-revisions-grant`
 - canonical grant drafting now exists for:
   - `draft-edits-grant`
+- canonical paper contextualization now exists for:
+  - `contextualize-revisions-paper`
+- canonical paper drafting now exists for:
+  - `draft-edits-paper`
 - representative shared-stage runtime artifacts now exist for one grant validation path under `review/editing/grants/google-impact-challenge-ai-for-science-application-1/`
 - representative grant contextualization runtime evidence now exists for that same validation path
 - representative grant drafting runtime evidence now exists for that same validation path
-- non-grant contextualize/draft skills are not yet implemented
+- representative paper contextualization runtime evidence now exists under `review/editing/papers/s44271-024-00170-w/`
+- representative paper drafting runtime evidence now exists under `review/editing/papers/s44271-024-00170-w/`
+- PAP editing and paper-code editing skills are not yet implemented

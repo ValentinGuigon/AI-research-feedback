@@ -17,6 +17,8 @@ Copy-Item Skills\plan-revisions.md .claude\commands\plan-revisions.md
 Copy-Item Skills\load-writing-constraints.md .claude\commands\load-writing-constraints.md
 Copy-Item Skills\contextualize-revisions-grant.md .claude\commands\contextualize-revisions-grant.md
 Copy-Item Skills\draft-edits-grant.md .claude\commands\draft-edits-grant.md
+Copy-Item Skills\contextualize-revisions-paper.md .claude\commands\contextualize-revisions-paper.md
+Copy-Item Skills\draft-edits-paper.md .claude\commands\draft-edits-paper.md
 ```
 
 ## Usage
@@ -34,6 +36,8 @@ Examples:
 /load-writing-constraints type=grant source=path/to/proposal.pdf profile=review/grants/my-call/profile.json
 /contextualize-revisions-grant source=path/to/proposal.pdf revision_plan=review/editing/grants/proposal/revision-plan.json writing_constraints=review/editing/grants/proposal/writing-constraints.json
 /draft-edits-grant contextualized_plan=review/editing/grants/proposal/contextualized-edit-plan.json
+/contextualize-revisions-paper source=path/to/paper.pdf revision_plan=review/editing/papers/paper/revision-plan.json writing_constraints=review/editing/papers/paper/writing-constraints.json
+/draft-edits-paper contextualized_plan=review/editing/papers/paper/contextualized-edit-plan.json
 ```
 
 ## Available Commands
@@ -49,3 +53,5 @@ Examples:
 - `load-writing-constraints`
 - `contextualize-revisions-grant`
 - `draft-edits-grant`
+- `contextualize-revisions-paper`
+- `draft-edits-paper`

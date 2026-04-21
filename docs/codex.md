@@ -53,6 +53,14 @@ Use the AI Research Feedback plugin skill `contextualize-revisions-grant` with s
 Use the AI Research Feedback plugin skill `draft-edits-grant` with contextualized_plan=review/editing/grants/proposal/contextualized-edit-plan.json.
 ```
 
+```text
+Use the AI Research Feedback plugin skill `contextualize-revisions-paper` with source=path/to/paper.pdf revision_plan=review/editing/papers/paper/revision-plan.json writing_constraints=review/editing/papers/paper/writing-constraints.json.
+```
+
+```text
+Use the AI Research Feedback plugin skill `draft-edits-paper` with contextualized_plan=review/editing/papers/paper/contextualized-edit-plan.json.
+```
+
 If Codex seems to ignore the plugin, make the prompt more explicit:
 
 ```text
@@ -71,4 +79,6 @@ Use the installed AI Research Feedback plugin. Run the `plan-grant-review` skill
 - `plan-revisions`
 - `load-writing-constraints`
 - `contextualize-revisions-grant`
+- `contextualize-revisions-paper`
 - `draft-edits-grant`
+- `draft-edits-paper`
