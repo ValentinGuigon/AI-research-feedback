@@ -21,6 +21,7 @@ Copy-Item Skills\contextualize-revisions-grant.md .claude\commands\contextualize
 Copy-Item Skills\draft-edits-grant.md .claude\commands\draft-edits-grant.md
 Copy-Item Skills\contextualize-revisions-paper.md .claude\commands\contextualize-revisions-paper.md
 Copy-Item Skills\draft-edits-paper.md .claude\commands\draft-edits-paper.md
+Copy-Item Skills\review-drafted-edits.md .claude\commands\review-drafted-edits.md
 ```
 
 ## Usage
@@ -42,7 +43,10 @@ Examples:
 /draft-edits-grant contextualized_plan=artifacts/grants/proposal/editing/contextualized-edit-plan.json
 /contextualize-revisions-paper source=path/to/paper.pdf revision_plan=artifacts/papers/paper/editing/revision-plan.json writing_constraints=artifacts/papers/paper/editing/writing-constraints.json
 /draft-edits-paper contextualized_plan=artifacts/papers/paper/editing/contextualized-edit-plan.json
+/review-drafted-edits drafted_instructions=artifacts/papers/paper/editing/drafted-edit-instructions.json
 ```
+
+`review-drafted-edits` supports validated grant and paper drafted edit instructions only. It preserves the no-source-rewrite and no-tracked-changes boundaries and must stop for PAP or paper-code loop artifacts until those paths are separately implemented and validated.
 
 ## Available Commands
 
@@ -61,3 +65,4 @@ Examples:
 - `draft-edits-grant`
 - `contextualize-revisions-paper`
 - `draft-edits-paper`
+- `review-drafted-edits`

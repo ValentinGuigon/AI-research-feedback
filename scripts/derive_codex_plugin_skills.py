@@ -18,6 +18,7 @@ EXPECTED_SKILLS = [
     "plan-feedback-revisions",
     "convert-feedback-plan-to-revision-plan",
     "plan-revisions",
+    "review-drafted-edits",
     "review-paper",
     "review-paper-light",
     "review-paper-code",

@@ -44,6 +44,60 @@
         "type": "string"
       }
     },
+    "previous_contextualized_edit_plan_path": {
+      "type": "string"
+    },
+    "previous_drafted_edit_instructions_path": {
+      "type": "string"
+    },
+    "projected_revision_state_path": {
+      "type": "string"
+    },
+    "edit_review_panel_report_path": {
+      "type": "string"
+    },
+    "iteration_reason": {
+      "type": "string"
+    },
+    "local_assessment_summary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "global_assessment_summary": {
+      "type": "string"
+    },
+    "accepted_prior_targets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "revised_prior_targets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rejected_or_rolled_back_targets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification_required": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tradeoff_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "revision_targets": {
       "type": "array",
       "minItems": 1,

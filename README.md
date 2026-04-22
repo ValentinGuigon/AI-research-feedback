@@ -67,13 +67,14 @@ Use the AI Research Feedback plugin skill `convert-feedback-plan-to-revision-pla
 - `draft-edits-grant`: grant-specific drafted edit instructions from a saved contextualized edit plan
 - `contextualize-revisions-paper`: paper-specific post-review contextualization from saved editing artifacts
 - `draft-edits-paper`: paper-specific drafted edit instructions from a saved contextualized edit plan
+- `review-drafted-edits`: post-draft edit-review loop for validated grant and paper drafted edit instructions
 
 Planned next layer:
 
 - post-review editing as a staged architecture, documented in `docs/post-review-editing.md`
 - feedback-addressed editing as a generalized upstream layer for DOCX comments, PDF annotations, review reports, inline notes, and direct user instructions, documented in `docs/feedback-addressed-editing.md`; the first DOCX-comment adapter path is represented by `plan-feedback-revisions`
 - shared editing schemas under `templates/editing/`
-- PAP or paper-code editing workflow specs
+- PAP or paper-code editing workflow specs and representative edit-review loop validation
 
 ## Output Locations
 
@@ -96,6 +97,9 @@ Planned post-review editing artifacts save under deterministic per-source folder
 - `writing-constraints` -> `artifacts/<object-folder>/<source-slug>/editing/writing-constraints.json`
 - `contextualized-edit-plan` -> `artifacts/<object-folder>/<source-slug>/editing/contextualized-edit-plan.json`
 - `drafted-edit-instructions` -> `artifacts/<object-folder>/<source-slug>/editing/drafted-edit-instructions.json`
+- `projected-revision-state` -> `artifacts/<object-folder>/<source-slug>/editing/projected-revision-state.json`
+- `edit-review-panel-report` -> `artifacts/<object-folder>/<source-slug>/editing/edit-review-panel-report.json`
+- versioned loop outputs -> `artifacts/<object-folder>/<source-slug>/editing/contextualized-edit-plan-vN.json` and `drafted-edit-instructions-vN.json`
 
 Current object folders are:
 
@@ -114,6 +118,20 @@ Shared post-review editing stages now specified:
 - `draft-edits-grant` -> `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
 - `contextualize-revisions-paper` -> `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json`
 - `draft-edits-paper` -> `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
+- `review-drafted-edits` -> grant or paper `projected-revision-state.json`, `edit-review-panel-report.json`, and, when another iteration is warranted, versioned contextualized and drafted artifacts
+
+Formal shared editing schemas live under `templates/editing/`, including the post-draft loop contracts for `projected-revision-state.json` and `edit-review-panel-report.json`.
+
+Current post-review editing support by object family:
+
+| Object family | Review support | Editing support | Post-draft loop support | Representative validation | Plugin exposure |
+| --- | --- | --- | --- | --- | --- |
+| Grants | `review-grant` | shared planning/constraints plus `contextualize-revisions-grant` and `draft-edits-grant` | canonical `review-drafted-edits` support | Google.org grant loop artifacts; Benrimoh feedback-derived downstream artifacts | current plugin exposes first-pass editing and the `review-drafted-edits` loop |
+| Papers | `review-paper`, `review-paper-light` | shared planning/constraints plus `contextualize-revisions-paper` and `draft-edits-paper` | canonical `review-drafted-edits` support | Communications Psychology paper loop artifacts | current plugin exposes first-pass editing and the `review-drafted-edits` loop |
+| PAPs | `review-pap` | shared contracts only; no PAP contextualizer or drafter | deferred | none | review only; no editing-loop exposure |
+| Paper-code | `review-paper-code` | shared contracts only; no paper-code contextualizer or drafter | deferred | none | review only; no editing-loop exposure |
+
+Editing artifacts are human-applied instructions and review evidence. They do not rewrite source documents, create tracked changes, patch live forms, or add unsupported empirical, sponsor, budget, partner, citation, or analysis claims.
 
 Representative runtime validation artifacts now exist for the Google.org grant fixture under:
 

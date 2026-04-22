@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Edit Review Panel Report",
+  "description": "Advisory local and global review of a projected revision state before another contextualized edit plan or human application.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_version",
+    "document_type",
+    "source_document_path",
+    "projected_revision_state_path",
+    "drafted_edit_instructions_path",
+    "baseline_reference_paths",
+    "generated_at",
+    "review_standard",
+    "panel_lenses",
+    "local_assessments",
+    "global_assessment",
+    "recommended_dispositions",
+    "evidence_for_next_plan",
+    "stop_condition_recommendation",
+    "advisory_boundary"
+  ],
+  "properties": {
+    "artifact_version": {
+      "type": "string"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "grant",
+        "paper",
+        "pap",
+        "paper-code"
+      ]
+    },
+    "source_document_path": {
+      "type": "string"
+    },
+    "projected_revision_state_path": {
+      "type": "string"
+    },
+    "drafted_edit_instructions_path": {
+      "type": "string"
+    },
+    "prior_contextualized_edit_plan_path": {
+      "type": "string"
+    },
+    "baseline_reference_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "review_standard": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "review_family"
+      ],
+      "properties": {
+        "review_family": {
+          "type": "string",
+          "enum": [
+            "grant",
+            "paper",
+            "pap",
+            "paper-code",
+            "general"
+          ]
+        }
+      }
+    },
+    "panel_lenses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "lens_id",
+          "status",
+          "reason"
+        ],
+        "properties": {
+          "lens_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "run",
+              "omitted"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "local_assessments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "instruction_id",
+          "contextualized_target_id",
+          "local_result",
+          "disposition",
+          "assessment",
+          "evidence_for_next_plan"
+        ],
+        "properties": {
+          "instruction_id": {
+            "type": "string"
+          },
+          "contextualized_target_id": {
+            "type": "string"
+          },
+          "local_result": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "partial",
+              "fail",
+              "needs-verification"
+            ]
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "revise",
+              "reject",
+              "verify",
+              "stop"
+            ]
+          },
+          "assessment": {
+            "type": "string"
+          },
+          "evidence_for_next_plan": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "global_assessment": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "overall_result",
+        "assessment"
+      ],
+      "properties": {
+        "overall_result": {
+          "type": "string"
+        },
+        "assessment": {
+          "type": "string"
+        }
+      }
+    },
+    "recommended_dispositions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "target_id",
+          "disposition",
+          "reason"
+        ],
+        "properties": {
+          "target_id": {
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "revise",
+              "reject",
+              "verify",
+              "stop"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "evidence_for_next_plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "target_id",
+          "evidence_type",
+          "summary"
+        ],
+        "properties": {
+          "target_id": {
+            "type": "string"
+          },
+          "evidence_type": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "stop_condition_recommendation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "recommendation",
+        "rationale",
+        "human_verification_required"
+      ],
+      "properties": {
+        "recommendation": {
+          "type": "string",
+          "enum": [
+            "accept current drafted instructions",
+            "loop to a new contextualized plan",
+            "escalate to human verification"
+          ]
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "human_verification_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "advisory_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewer_output_authoritative",
+        "next_authoritative_artifact",
+        "notes"
+      ],
+      "properties": {
+        "reviewer_output_authoritative": {
+          "const": false
+        },
+        "next_authoritative_artifact": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

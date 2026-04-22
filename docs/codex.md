@@ -69,6 +69,12 @@ Use the AI Research Feedback plugin skill `contextualize-revisions-paper` with s
 Use the AI Research Feedback plugin skill `draft-edits-paper` with contextualized_plan=artifacts/papers/paper/editing/contextualized-edit-plan.json.
 ```
 
+```text
+Use the AI Research Feedback plugin skill `review-drafted-edits` with drafted_instructions=artifacts/grants/proposal/editing/drafted-edit-instructions.json.
+```
+
+`review-drafted-edits` is plugin-exposed only for validated grant and paper drafted edit instructions. It must stop for PAP or paper-code artifacts until representative contextualization, drafting, loop artifacts, and validation exist for those families.
+
 If Codex seems to ignore the plugin, make the prompt more explicit:
 
 ```text
@@ -92,3 +98,4 @@ Use the installed AI Research Feedback plugin. Run the `plan-grant-review` skill
 - `contextualize-revisions-paper`
 - `draft-edits-grant`
 - `draft-edits-paper`
+- `review-drafted-edits`

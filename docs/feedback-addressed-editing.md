@@ -13,6 +13,7 @@ feedback-bearing source + feedback guidelines + selection policy
 -> writing-constraints.json
 -> contextualized-edit-plan.json
 -> drafted-edit-instructions.json
+-> optional post-draft edit review iteration loop
 ```
 
 This is a specification for the shared architecture. The first bounded DOCX-comment planning path is implemented as `Skills/plan-feedback-revisions.md`, with representative single-comment and all-comment normalized feedback artifacts under `artifacts/grants/benrimoh-research-vision/editing/`. The compatibility bridge into the existing `revision-plan.json` contract is implemented as `Skills/convert-feedback-plan-to-revision-plan.md`, with representative Benrimoh revision-plan artifacts in the same editing directory. A later validation pass also proves the selected single-comment `FB2` path can continue through writing constraints, grant contextualization, and drafted edit instructions while preserving feedback provenance. PDF extraction, tracked changes, and direct source-document rewriting remain out of scope.
@@ -213,6 +214,38 @@ This preserves the existing downstream contracts:
 The normalized target id should use a stable prefix such as `F1`, `F2`, and `F3`. When converted into `revision-plan.json`, those ids are mapped to `R1`, `R2`, and `R3`; the bridge preserves the mapping in plan notes and keeps feedback ids, source-specific comment ids, guideline appraisal, and anchor evidence recoverable through schema-allowed evidence and notes fields.
 
 The Benrimoh validation chain demonstrates this downstream mapping for the single selected feedback item `FB2`: `F1` maps to `R1`, and the final drafted instruction keeps `FB2`, DOCX comment id `1`, the normalized feedback plan path, and the revision plan path recoverable without changing downstream schemas.
+
+## Continuation Into Post-Draft Edit Review
+
+After feedback-derived targets have passed through writing constraints, contextualization, and drafted edit instructions, they can enter the same post-draft edit review iteration loop specified in `docs/post-review-editing.md`.
+
+The feedback layer does not create a separate loop or a separate authoritative decision artifact. For validated grant and paper editing chains, the canonical loop surface is `Skills/review-drafted-edits.md`; PAP and paper-code loop use remains deferred until those families have representative contextualization, drafting, loop artifacts, and validation. The sequence remains:
+
+```text
+drafted-edit-instructions.json
+-> projected-revision-state.json
+-> edit-review-panel-report.json
+-> contextualized-edit-plan-v2.json
+-> drafted-edit-instructions-v2.json
+```
+
+For feedback-derived editing, the projected state and edit-review panel report should preserve feedback provenance in addition to ordinary review provenance:
+
+- normalized feedback ids such as `FB2`
+- adapter-level ids such as DOCX comment ids or PDF annotation ids when recoverable
+- normalized target ids such as `F1`
+- compatible revision target ids such as `R1`
+- guideline appraisal status and rationale
+- normalized feedback plan path and revision plan path
+
+These artifacts use the same formal schemas as other post-draft loops:
+
+- `templates/editing/projected-revision-state.schema.json`
+- `templates/editing/edit-review-panel-report.schema.json`
+
+Feedback-specific ids and adapter details should be carried in schema-allowed provenance, assessment, or object-specific detail fields. They should not create a separate feedback-only schema unless a later bounded pass finds that the shared contracts cannot preserve feedback provenance truthfully.
+
+Reviewer evidence from the edit-review panel remains advisory. If the panel recommends another iteration, that evidence should be folded into `contextualized-edit-plan-v2.json`, which remains the authoritative next planning artifact. The loop must not silently expand a `single` or `subset` feedback selection into unselected comments or annotations.
 
 ## Out Of Scope
 
