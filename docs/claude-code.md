@@ -2,6 +2,8 @@
 
 This repo can be used in Claude Code by installing selected files from `Skills/` into `.claude/commands/` or `~/.claude/commands/`.
 
+The guided review command `run-review` is canonical in `Skills/run-review.md`, and the guided editing command `run-editing` is canonical in `Skills/run-editing.md`. Both are exposed through the Codex plugin, but Claude Code still uses local command files, so install them manually if you want slash commands. You can also install and invoke the explicit stage commands below when the exact route is already clear.
+
 ## Install
 
 Project-local install:
@@ -9,6 +11,8 @@ Project-local install:
 ```powershell
 New-Item -ItemType Directory -Force .claude\commands | Out-Null
 Copy-Item Skills\review-paper.md .claude\commands\review-paper.md
+Copy-Item Skills\run-review.md .claude\commands\run-review.md
+Copy-Item Skills\run-editing.md .claude\commands\run-editing.md
 Copy-Item Skills\review-pap.md .claude\commands\review-pap.md
 Copy-Item Skills\fetch-grant-context.md .claude\commands\fetch-grant-context.md
 Copy-Item Skills\plan-grant-review.md .claude\commands\plan-grant-review.md
@@ -29,6 +33,8 @@ Copy-Item Skills\review-drafted-edits.md .claude\commands\review-drafted-edits.m
 Examples:
 
 ```text
+/run-review path/to/document.pdf
+/run-editing artifacts/grants/my-proposal/editing/
 /review-paper
 /review-paper PsychSci path/to/paper.docx
 /review-pap OSF path/to/pap.docx
@@ -51,6 +57,8 @@ Examples:
 ## Available Commands
 
 - `review-paper`
+- `run-review`
+- `run-editing`
 - `review-paper-light`
 - `review-paper-code`
 - `review-pap`

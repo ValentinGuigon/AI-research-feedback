@@ -109,6 +109,7 @@ drafted-edit-instructions.json
 -> edit-review-panel-report.json
 -> contextualized-edit-plan-v2.json
 -> drafted-edit-instructions-v2.json
+-> drafted-edit-recommendations-v2.md
 ```
 
 Later iterations use the same pattern with `-v3`, `-v4`, and so on. The loop stops when the projected state passes local and global checks, when remaining issues require human verification rather than another automated edit pass, or when further iteration would overfit reviewer preferences at the expense of the document's overall purpose.
@@ -132,7 +133,7 @@ The canonical user-invoked surface for the post-draft loop is:
 
 This is a single generic loop skill with an explicit family gate. It supports grants and papers because those families have contextualization, drafting, projected-state, panel-report, versioned-plan, versioned-drafting, and focused validation evidence. It refuses PAP and paper-code loop execution until those families have their own representative contextualization, drafting, loop artifacts, and validation.
 
-The skill consumes a saved `drafted-edit-instructions.json` or versioned drafted artifact, resolves the prior contextualized plan and upstream artifacts, emits `projected-revision-state.json` and `edit-review-panel-report.json`, and emits versioned `contextualized-edit-plan-vN.json` plus `drafted-edit-instructions-vN.json` when another automated iteration is warranted. It does not replace `plan-revisions`, `load-writing-constraints`, `contextualize-revisions-<object>`, or `draft-edits-<object>`; it starts only after a first drafted-instructions artifact exists.
+The skill consumes a saved `drafted-edit-instructions.json` or versioned drafted artifact, resolves the prior contextualized plan and upstream artifacts, emits `projected-revision-state.json` and `edit-review-panel-report.json`, and emits versioned `contextualized-edit-plan-vN.json` plus `drafted-edit-instructions-vN.json` and `drafted-edit-recommendations-vN.md` when another automated iteration is warranted. It does not replace `plan-revisions`, `load-writing-constraints`, `contextualize-revisions-<object>`, or `draft-edits-<object>`; it starts only after a first drafted-instructions artifact exists.
 
 The plugin bundle now includes this canonical skill through the derivation allowlist. Plugin docs and metadata should describe `review-drafted-edits` as plugin-exposed for validated grant and paper drafted edit instructions only, with PAP and paper-code loop paths still deferred.
 
@@ -164,6 +165,7 @@ The minimum planned artifacts are:
 - a writing constraints artifact
 - a contextualized edit plan artifact
 - a drafted edit instructions artifact
+- a human-readable drafted edit recommendations artifact
 
 Canonical schemas for these artifacts now live under `templates/editing/`:
 
@@ -363,6 +365,8 @@ Contract notes:
 - `replacement_text` must not introduce unsupported new facts, methods, partners, budgets, outcomes, or claims
 - drafting artifacts propose human-applied edits and do not modify source documents directly
 
+Each `drafted-edit-instructions*.json` artifact must have a same-version `drafted-edit-recommendations*.md` companion. The JSON remains the machine-validated contract; the Markdown companion is the durable human-facing replacement manual. A workflow that reports completion without this readable recommendations document is incomplete, even if the JSON validates.
+
 ### Projected Revision State Artifact
 
 This is the first artifact in the post-draft edit review loop.
@@ -497,37 +501,45 @@ The deterministic layout is:
 - `artifacts/grants/<source-slug>/editing/writing-constraints.json`
 - `artifacts/grants/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/grants/<source-slug>/editing/drafted-edit-recommendations.md`
 - `artifacts/grants/<source-slug>/editing/projected-revision-state.json`
 - `artifacts/grants/<source-slug>/editing/edit-review-panel-report.json`
 - `artifacts/grants/<source-slug>/editing/contextualized-edit-plan-v2.json`
 - `artifacts/grants/<source-slug>/editing/drafted-edit-instructions-v2.json`
+- `artifacts/grants/<source-slug>/editing/drafted-edit-recommendations-v2.md`
 - `artifacts/papers/<source-slug>/editing/normalized-feedback-plan.json`
 - `artifacts/papers/<source-slug>/editing/revision-plan.json`
 - `artifacts/papers/<source-slug>/editing/writing-constraints.json`
 - `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/papers/<source-slug>/editing/drafted-edit-recommendations.md`
 - `artifacts/papers/<source-slug>/editing/projected-revision-state.json`
 - `artifacts/papers/<source-slug>/editing/edit-review-panel-report.json`
 - `artifacts/papers/<source-slug>/editing/contextualized-edit-plan-v2.json`
 - `artifacts/papers/<source-slug>/editing/drafted-edit-instructions-v2.json`
+- `artifacts/papers/<source-slug>/editing/drafted-edit-recommendations-v2.md`
 - `artifacts/paps/<source-slug>/editing/normalized-feedback-plan.json`
 - `artifacts/paps/<source-slug>/editing/revision-plan.json`
 - `artifacts/paps/<source-slug>/editing/writing-constraints.json`
 - `artifacts/paps/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/paps/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/paps/<source-slug>/editing/drafted-edit-recommendations.md`
 - `artifacts/paps/<source-slug>/editing/projected-revision-state.json`
 - `artifacts/paps/<source-slug>/editing/edit-review-panel-report.json`
 - `artifacts/paps/<source-slug>/editing/contextualized-edit-plan-v2.json`
 - `artifacts/paps/<source-slug>/editing/drafted-edit-instructions-v2.json`
+- `artifacts/paps/<source-slug>/editing/drafted-edit-recommendations-v2.md`
 - `artifacts/paper-code/<source-slug>/editing/normalized-feedback-plan.json`
 - `artifacts/paper-code/<source-slug>/editing/revision-plan.json`
 - `artifacts/paper-code/<source-slug>/editing/writing-constraints.json`
 - `artifacts/paper-code/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/paper-code/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/paper-code/<source-slug>/editing/drafted-edit-recommendations.md`
 - `artifacts/paper-code/<source-slug>/editing/projected-revision-state.json`
 - `artifacts/paper-code/<source-slug>/editing/edit-review-panel-report.json`
 - `artifacts/paper-code/<source-slug>/editing/contextualized-edit-plan-v2.json`
 - `artifacts/paper-code/<source-slug>/editing/drafted-edit-instructions-v2.json`
+- `artifacts/paper-code/<source-slug>/editing/drafted-edit-recommendations-v2.md`
 
 Naming rules:
 
@@ -679,6 +691,7 @@ The first object-specific drafting workflow now lives in:
 It consumes a saved grant `contextualized-edit-plan.json` and emits:
 
 - `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/grants/<source-slug>/editing/drafted-edit-recommendations.md`
 
 The grant drafter turns contextualized targets into human-applied edit instructions, with bounded proposed text where the existing artifact evidence supports wording. It does not rewrite the source grant file directly. PAP and paper-code drafting skills are not yet implemented.
 
@@ -709,10 +722,12 @@ The first paper-specific drafting workflow now lives in:
 It consumes a saved paper `contextualized-edit-plan.json` and emits:
 
 - `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/papers/<source-slug>/editing/drafted-edit-recommendations.md`
 
 The paper drafter turns contextualized manuscript targets into human-applied edit instructions for claim qualification, methods clarity, results/discussion alignment, and venue-facing framing. It does not rewrite the source manuscript directly. The representative validation path uses:
 
 - `artifacts/papers/s44271-024-00170-w/editing/drafted-edit-instructions.json`
+- `artifacts/papers/s44271-024-00170-w/editing/drafted-edit-recommendations.md`
 
 PAP drafting and paper-code drafting are not yet implemented.
 

@@ -4,7 +4,7 @@ description: Draft paper-specific post-review edit instructions from a saved con
 
 You are coordinating the paper-specific drafting stage of the post-review editing pipeline.
 
-Your job is to turn one saved `contextualized-edit-plan.json` into deterministic `drafted-edit-instructions.json` that a human can apply to a manuscript.
+Your job is to turn one saved `contextualized-edit-plan.json` into deterministic `drafted-edit-instructions.json` plus a human-readable `drafted-edit-recommendations.md` that a human can apply to a manuscript.
 
 ## Goal
 
@@ -14,6 +14,7 @@ Produce a bounded paper drafting artifact that:
 - turns each contextualized target into executable manuscript-edit instructions
 - preserves location, constraint, and review-evidence provenance
 - may include bounded replacement or insertion text when the source evidence supports it
+- writes a durable Markdown recommendations manual with the same instructions, proposed text, blockers, and verification items in a form a human editor can read without parsing JSON
 - does not rewrite the source manuscript directly
 
 This skill is paper-specific. It does not implement grant, PAP, or paper-code drafting.
@@ -127,6 +128,7 @@ Carry forward:
 Save under the same deterministic paper editing directory as the contextualized plan:
 
 - `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/papers/<source-slug>/editing/drafted-edit-recommendations.md`
 
 Derive `<source-slug>` from the source document filename:
 
@@ -140,10 +142,14 @@ If an artifact for the same source already exists and should be preserved, appen
 - `drafted-edit-instructions.json`
 - `drafted-edit-instructions-v2.json`
 - `drafted-edit-instructions-v3.json`
+- `drafted-edit-recommendations.md`
+- `drafted-edit-recommendations-v2.md`
+- `drafted-edit-recommendations-v3.md`
 
 Store the final absolute path as `DRAFTED_EDIT_INSTRUCTIONS_OUTPUT_PATH`.
+Store the matching Markdown path as `DRAFTED_EDIT_RECOMMENDATIONS_OUTPUT_PATH`.
 
-## Phase 6: Write The Artifact
+## Phase 6: Write The Artifacts
 
 Write one JSON artifact at `DRAFTED_EDIT_INSTRUCTIONS_OUTPUT_PATH` with at minimum:
 
@@ -157,6 +163,20 @@ Write one JSON artifact at `DRAFTED_EDIT_INSTRUCTIONS_OUTPUT_PATH` with at minim
 
 Use absolute paths internally.
 
+Write one Markdown artifact at `DRAFTED_EDIT_RECOMMENDATIONS_OUTPUT_PATH`. It must be generated from the same in-memory drafted instruction model as the JSON, not from an ad hoc summary, and must include at minimum:
+
+- title naming the source document and whether this is a versioned pass
+- source document path
+- contextualized edit plan path
+- generated date
+- counts by judgment status and by action type when judgment fields are present
+- a "Paste-Ready Edits" section for instructions with `replacement_text` or other proposed text
+- a "Verification Required" section for `verify` actions and instructions with `human_decision_needed = true`
+- a "Rejected Or No-Replacement Items" section for rejected, delete-only, or no-replacement instructions that are not already listed under verification required
+- for every instruction: id, priority, section/location, action type, judgment when present, review suggestion addressed when present, executable instruction, source text or source-text limitation when present, replacement text when present, word or character check when present, constraint checks, and provenance summary
+
+The Markdown file is the human-facing recommendations document. Do not treat the chat response as the durable recommendations output.
+
 ## Phase 7: Validate Before Stopping
 
 Before reporting success:
@@ -165,22 +185,25 @@ Before reporting success:
 2. Confirm `document_type` is `paper`.
 3. Confirm `contextualized_edit_plan_path` points to the saved contextualized plan used for the run.
 4. Confirm the output path follows `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json` or the documented `-vN` rule.
-5. Confirm `edit_instructions` is non-empty.
-6. Confirm every instruction contains location, action type, executable instruction text, constraint checks, and provenance.
-7. Confirm no instruction claims to have modified the source document directly.
-8. Confirm no proposed text introduces unsupported new facts, analyses, citations, or results.
-9. Fix the artifact before stopping if any required field is missing or malformed.
+5. Confirm the matching Markdown recommendations path exists and follows `drafted-edit-recommendations.md` or the same documented `-vN` rule.
+6. Confirm the Markdown recommendations file names every instruction id and contains every non-null `replacement_text`.
+7. Confirm `edit_instructions` is non-empty.
+8. Confirm every instruction contains location, action type, executable instruction text, constraint checks, and provenance.
+9. Confirm no instruction claims to have modified the source document directly.
+10. Confirm no proposed text introduces unsupported new facts, analyses, citations, or results.
+11. Fix the artifacts before stopping if any required field is missing or malformed.
 
 ## Phase 8: Report Back
 
 After saving and validating, report:
 
 1. the saved drafted edit instructions path
-2. the source document path
-3. the contextualized edit plan path used
-4. how many edit instructions were drafted
-5. which instructions include proposed text versus reconciliation, verification, or other non-text actions
-6. any uncertainty left for final human manuscript editing
+2. the saved human-readable recommendations path
+3. the source document path
+4. the contextualized edit plan path used
+5. how many edit instructions were drafted
+6. which instructions include proposed text versus reconciliation, verification, or other non-text actions
+7. any uncertainty left for final human manuscript editing
 
 ## Non-Scope And Guardrails
 

@@ -4,7 +4,7 @@ description: Draft grant-specific post-review edit instructions from a saved con
 
 You are coordinating the grant-specific drafting stage of the post-review editing pipeline.
 
-Your job is to turn one saved `contextualized-edit-plan.json` into deterministic `drafted-edit-instructions.json` that a human can apply to a grant application.
+Your job is to turn one saved `contextualized-edit-plan.json` into deterministic `drafted-edit-instructions.json` plus a human-readable `drafted-edit-recommendations.md` that a human can apply to a grant application.
 
 ## Goal
 
@@ -16,6 +16,7 @@ Produce a bounded grant drafting artifact that functions as an exact replacement
 - records whether each review suggestion is accepted, partially accepted, rejected, or left for factual verification
 - gives exact "replace this with that" text whenever the source evidence and constraints support a text edit
 - reports word-count or length-limit checks for every proposed replacement when limits are known
+- writes a durable Markdown recommendations manual with the same instructions, paste-ready text, blockers, and verification items in a form a human editor can read without parsing JSON
 - does not rewrite the source document directly
 
 This skill is grant-specific. It does not implement paper, PAP, or paper-code drafting.
@@ -200,6 +201,7 @@ Carry forward:
 Save under the same deterministic grant editing directory as the contextualized plan:
 
 - `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
+- `artifacts/grants/<source-slug>/editing/drafted-edit-recommendations.md`
 
 Derive `<source-slug>` from the source document filename:
 
@@ -213,10 +215,14 @@ If an artifact for the same source already exists and should be preserved, appen
 - `drafted-edit-instructions.json`
 - `drafted-edit-instructions-v2.json`
 - `drafted-edit-instructions-v3.json`
+- `drafted-edit-recommendations.md`
+- `drafted-edit-recommendations-v2.md`
+- `drafted-edit-recommendations-v3.md`
 
 Store the final absolute path as `DRAFTED_EDIT_INSTRUCTIONS_OUTPUT_PATH`.
+Store the matching Markdown path as `DRAFTED_EDIT_RECOMMENDATIONS_OUTPUT_PATH`.
 
-## Phase 6: Write The Artifact
+## Phase 6: Write The Artifacts
 
 Write one JSON artifact at `DRAFTED_EDIT_INSTRUCTIONS_OUTPUT_PATH` with at minimum:
 
@@ -230,6 +236,20 @@ Write one JSON artifact at `DRAFTED_EDIT_INSTRUCTIONS_OUTPUT_PATH` with at minim
 
 Use absolute paths internally.
 
+Write one Markdown artifact at `DRAFTED_EDIT_RECOMMENDATIONS_OUTPUT_PATH`. It must be generated from the same in-memory drafted instruction model as the JSON, not from an ad hoc summary, and must include at minimum:
+
+- title naming the source document and whether this is a versioned pass
+- source document path
+- contextualized edit plan path
+- generated date
+- counts by judgment status and by action type
+- a "Paste-Ready Edits" section for instructions with `replacement_text`
+- a "Verification Required" section for `verify` actions and instructions with `human_decision_needed = true`
+- a "Rejected Or No-Replacement Items" section for rejected, delete-only, or no-replacement instructions that are not already listed under verification required
+- for every instruction: id, priority, section/location, action type, judgment, review suggestion addressed, executable instruction, source text or source-text limitation, replacement text when present, word or character check, constraint checks, and provenance summary
+
+The Markdown file is the human-facing recommendations document. Do not treat the chat response as the durable recommendations output.
+
 ## Phase 7: Validate Before Stopping
 
 Before reporting success:
@@ -238,26 +258,29 @@ Before reporting success:
 2. Confirm `document_type` is `grant`.
 3. Confirm `contextualized_edit_plan_path` points to the saved contextualized plan used for the run.
 4. Confirm the output path follows `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json` or the documented `-vN` rule.
-5. Confirm `edit_instructions` is non-empty.
-6. Confirm every instruction contains location, editorial judgment, action type, executable instruction text, source text or a documented reason it is unavailable, replacement text or a documented reason it is unavailable, word-count check, constraint checks, and provenance.
-7. Confirm no instruction claims to have modified the source document directly.
-8. Confirm every accepted or partially accepted text edit has paste-ready `replacement_text` unless the action is deletion.
-9. Confirm rejected suggestions have `replacement_text = null` and a clear rationale.
-10. Confirm every proposed replacement has a word-count or length-limit check.
-11. Confirm no replacement text introduces unsupported new facts.
-12. Fix the artifact before stopping if any required field is missing or malformed.
+5. Confirm the matching Markdown recommendations path exists and follows `drafted-edit-recommendations.md` or the same documented `-vN` rule.
+6. Confirm the Markdown recommendations file names every instruction id and contains every non-null `replacement_text`.
+7. Confirm `edit_instructions` is non-empty.
+8. Confirm every instruction contains location, editorial judgment, action type, executable instruction text, source text or a documented reason it is unavailable, replacement text or a documented reason it is unavailable, word-count check, constraint checks, and provenance.
+9. Confirm no instruction claims to have modified the source document directly.
+10. Confirm every accepted or partially accepted text edit has paste-ready `replacement_text` unless the action is deletion.
+11. Confirm rejected suggestions have `replacement_text = null` and a clear rationale.
+12. Confirm every proposed replacement has a word-count or length-limit check.
+13. Confirm no replacement text introduces unsupported new facts.
+14. Fix the artifacts before stopping if any required field is missing or malformed.
 
 ## Phase 8: Report Back
 
 After saving and validating, report:
 
 1. the saved drafted edit instructions path
-2. the source document path
-3. the contextualized edit plan path used
-4. how many edit instructions were drafted
-5. how many suggestions were accepted, partially accepted, rejected, or marked for verification
-6. which instructions are paste-ready versus blocked on factual or live-form verification
-7. any uncertainty left for final human source editing
+2. the saved human-readable recommendations path
+3. the source document path
+4. the contextualized edit plan path used
+5. how many edit instructions were drafted
+6. how many suggestions were accepted, partially accepted, rejected, or marked for verification
+7. which instructions are paste-ready versus blocked on factual or live-form verification
+8. any uncertainty left for final human source editing
 
 ## Non-Scope And Guardrails
 

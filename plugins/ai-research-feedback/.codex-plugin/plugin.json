@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "AI Research Feedback",
-    "shortDescription": "Academic review and revision-planning workflows.",
-    "longDescription": "Thin Codex plugin packaging for canonical academic review workflows plus shared feedback-addressed planning, grant-specific and paper-specific post-review editing specs, and the validated grant/paper post-draft edit-review loop authored in Skills/*.md.",
+    "shortDescription": "Guided academic review and revision-planning workflows.",
+    "longDescription": "Thin Codex plugin packaging for canonical guided review and editing orchestrators, academic review workflows, shared feedback-addressed planning, grant-specific and paper-specific post-review editing specs, and the validated grant/paper post-draft edit-review loop authored in Skills/*.md. The guided orchestrators route to existing skills and do not rewrite source documents, create tracked changes, silently overwrite artifacts, or run unsupported PAP or paper-code editing loops.",
     "developerName": "Valentin Guigon",
     "category": "Productivity",
     "capabilities": [
@@ -29,6 +29,8 @@
     ],
     "websiteURL": "https://github.com/ValentinGuigon/AI-research-feedback",
     "defaultPrompt": [
+      "Use run-review to decide which review workflow should handle this document.",
+      "Use run-editing to continue the next safe staged editing step for this artifact chain.",
       "Review my paper for journal fit and major weaknesses.",
       "Run a quick paper check before submission.",
       "Review my pre-analysis plan before registration.",

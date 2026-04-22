@@ -15,6 +15,7 @@ Produce a bounded edit-review loop artifact set that:
 - runs an advisory edit-review panel using the appropriate grant or paper standards
 - folds reviewer evidence into a versioned `contextualized-edit-plan-vN.json` when another iteration is needed
 - regenerates versioned `drafted-edit-instructions-vN.json` from that versioned contextualized plan
+- writes the matching versioned `drafted-edit-recommendations-vN.md` so the latest loop output is human-readable without parsing JSON
 - preserves provenance across the original plan, drafted instructions, projected state, panel report, and versioned outputs
 
 This skill currently supports validated grant and paper editing chains only. It does not implement PAP or paper-code edit-review loops.
@@ -149,6 +150,7 @@ When the recommendation is `loop to a new contextualized plan`, create the next 
 
 - `contextualized-edit-plan-vN.json`
 - `drafted-edit-instructions-vN.json`
+- `drafted-edit-recommendations-vN.md`
 
 The version number should be one greater than the drafted/contextualized plan being reviewed, unless the user supplied an explicit `iteration=` value that does not conflict with existing files.
 
@@ -182,6 +184,8 @@ The versioned drafted instructions must:
 - keep `replacement_text` bounded to evidence-supported wording, or `null` for delete, reject, verify, or source-local verification actions
 - include word-count or length-limit checks when known
 
+Also write the matching versioned Markdown recommendations manual from the same drafted instruction model. It must include the same minimum human-readable sections required by `draft-edits-grant` and `draft-edits-paper`, including paste-ready edits, verification-required items, rejected or no-replacement items not already listed as verification-required, every instruction id, every non-null replacement text, and provenance summaries. The Markdown file is the durable human-facing output of the loop; the chat response is not a substitute.
+
 ## Phase 8: Resolve Deterministic Output Paths
 
 Use the same deterministic editing directory as the input drafted instructions:
@@ -195,6 +199,7 @@ Default loop outputs:
 - `edit-review-panel-report.json`
 - `contextualized-edit-plan-v2.json`
 - `drafted-edit-instructions-v2.json`
+- `drafted-edit-recommendations-v2.md`
 
 When preserving an existing loop, append or increment the same version number:
 
@@ -202,6 +207,7 @@ When preserving an existing loop, append or increment the same version number:
 - `edit-review-panel-report-v3.json`
 - `contextualized-edit-plan-v3.json`
 - `drafted-edit-instructions-v3.json`
+- `drafted-edit-recommendations-v3.md`
 
 Do not write PAP or paper-code loop artifacts.
 
@@ -215,9 +221,10 @@ Before reporting success:
 4. Confirm no artifact claims source rewriting, tracked changes, or source-document patching.
 5. Confirm the panel report is advisory and points to the next authoritative contextualized plan when another iteration is recommended.
 6. If versioned artifacts are produced, confirm the contextualized plan contains iteration fields and the drafted instructions point to that contextualized plan.
-7. Confirm artifact paths remain inside the deterministic grant or paper editing directory.
-8. Confirm no source documents were modified.
-9. Fix malformed artifacts before stopping.
+7. If versioned drafted instructions are produced, confirm the matching `drafted-edit-recommendations-vN.md` exists, names every instruction id, and contains every non-null `replacement_text`.
+8. Confirm artifact paths remain inside the deterministic grant or paper editing directory.
+9. Confirm no source documents were modified.
+10. Fix malformed artifacts before stopping.
 
 ## Phase 10: Report Back
 
@@ -227,12 +234,13 @@ After saving and validating, report:
 2. the edit-review panel report path
 3. any versioned contextualized plan path
 4. any versioned drafted instructions path
-5. the source document path
-6. the document family
-7. how many drafted instructions were reviewed
-8. the panel recommendation
-9. which issues were accepted, revised, rejected, or left for human verification
-10. any remaining uncertainty for final human source editing
+5. any versioned human-readable recommendations path
+6. the source document path
+7. the document family
+8. how many drafted instructions were reviewed
+9. the panel recommendation
+10. which issues were accepted, revised, rejected, or left for human verification
+11. any remaining uncertainty for final human source editing
 
 ## Non-Scope And Guardrails
 

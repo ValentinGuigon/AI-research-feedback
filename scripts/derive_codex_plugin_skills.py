@@ -9,6 +9,8 @@ CANONICAL_SKILLS_DIR = REPO_ROOT / "Skills"
 PLUGIN_SKILLS_DIR = REPO_ROOT / "plugins" / "ai-research-feedback" / "skills"
 EXPECTED_SKILLS = [
     "fetch-grant-context",
+    "run-review",
+    "run-editing",
     "contextualize-revisions-grant",
     "contextualize-revisions-paper",
     "draft-edits-grant",

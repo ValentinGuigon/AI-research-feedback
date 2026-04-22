@@ -19,7 +19,17 @@ For repo-local use, Codex reads:
 
 Codex does not currently expose these workflows as top-level slash commands. Use normal prompts and name the skill explicitly.
 
+The guided review orchestrator `run-review` and guided editing orchestrator `run-editing` are exposed through the plugin. Use them for natural-language requests that need discovery, short clarifying questions, or safe routing. Use the explicit plugin skill names listed below when the exact stage is already clear.
+
 Examples:
+
+```text
+Use the AI Research Feedback plugin skill `run-review` to review path/to/document.pdf.
+```
+
+```text
+Use the AI Research Feedback plugin skill `run-editing` to continue the editing chain for artifacts/grants/my-proposal/editing/.
+```
 
 ```text
 Use the AI Research Feedback plugin skill `review-paper` on path/to/paper.docx.
@@ -84,6 +94,8 @@ Use the installed AI Research Feedback plugin. Run the `plan-grant-review` skill
 ## Available Skills
 
 - `fetch-grant-context`
+- `run-review`
+- `run-editing`
 - `plan-grant-review`
 - `review-paper`
 - `review-paper-light`
