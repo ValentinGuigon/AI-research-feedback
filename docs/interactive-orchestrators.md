@@ -216,8 +216,9 @@ Discovery order within a candidate `editing/` directory:
 7. `drafted-edit-recommendations.md`
 8. `contextualized-edit-plan.json`
 9. `writing-constraints.json`
-10. `revision-plan.json` and `revision-plan-vN.json`
-11. `normalized-feedback-plan.json` and `normalized-feedback-plan-vN.json`
+10. `revision-recommendations.md` and `revision-recommendations-vN.md`
+11. `revision-plan.json` and `revision-plan-vN.json`
+12. `normalized-feedback-plan.json` and `normalized-feedback-plan-vN.json`
 
 Review reports outside `editing/` are upstream inputs and should be discovered after checking existing editing artifacts:
 
@@ -275,12 +276,13 @@ Routing should choose the next existing stage skill, not generate artifacts itse
 | DOCX comments and selection mode | `plan-feedback-revisions` | `plan-feedback-revisions` |
 | `normalized-feedback-plan.json` | `convert-feedback-plan-to-revision-plan` | `convert-feedback-plan-to-revision-plan` |
 | review report and source document | `plan-revisions` | `plan-revisions` |
+| `revision-plan.json` with user request for human-readable guidance | route to the new `revision-recommendations*.md` stage when implemented; until then, stop or report that the stage is specified but not implemented | route to the new `revision-recommendations*.md` stage when implemented; until then, stop or report that the stage is specified but not implemented |
 | source document needing constraints | `load-writing-constraints` | `load-writing-constraints` |
 | `revision-plan.json` plus `writing-constraints.json` | `contextualize-revisions-grant` | `contextualize-revisions-paper` |
 | `contextualized-edit-plan.json` | `draft-edits-grant` | `draft-edits-paper` |
 | `drafted-edit-instructions.json` with matching `drafted-edit-recommendations.md` | `review-drafted-edits` | `review-drafted-edits` |
 
-If a chain has both `revision-plan.json` and `writing-constraints.json` but lacks a contextualized plan, route to the object-specific contextualizer. If it has a contextualized plan but no drafted instructions, route to the object-specific drafter. If it has drafted instructions without the same-version human-readable recommendations artifact, route to the relevant drafting or loop stage to repair the missing recommendations artifact before reporting the chain as ready. If it has drafted instructions and matching recommendations, and the user asks to continue or quality-check, route to `review-drafted-edits`.
+If a chain has `revision-plan*.json` but no `revision-recommendations*.md`, `run-editing` should treat the Markdown companion as the preferred next human-readable stage when the user asks for readable revision guidance. Because this pass is specification only, the orchestrator must not claim that the new stage already exists or is already implemented. If a chain has both `revision-plan.json` and `writing-constraints.json` but lacks a contextualized plan, route to the object-specific contextualizer. If it has a contextualized plan but no drafted instructions, route to the object-specific drafter. If it has drafted instructions without the same-version human-readable recommendations artifact, route to the relevant drafting or loop stage to repair the missing recommendations artifact before reporting the chain as ready. If it has drafted instructions and matching recommendations, and the user asks to continue or quality-check, route to `review-drafted-edits`.
 
 For feedback-derived editing:
 
@@ -317,6 +319,7 @@ If the expected path exists:
 If versioning is selected, preserve the stage's documented naming pattern:
 
 - `revision-plan-v2.json`
+- `revision-recommendations-v2.md`
 - `writing-constraints-v2.json`
 - `contextualized-edit-plan-v2.json`
 - `drafted-edit-instructions-v2.json`

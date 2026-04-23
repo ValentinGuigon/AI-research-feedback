@@ -22,13 +22,14 @@ One generic editor is too blunt because the repo reviews several different objec
 The intended architecture is:
 
 - one shared revision-planning core
+- one shared human-readable revision recommendations layer
 - one shared constraints contract
 - one object-specific contextualization layer
 - one object-specific drafting layer
 
 ## Pipeline Overview
 
-The planned editing flow has four core phases, followed by an optional post-draft review iteration loop when the drafted instructions need quality checking before human application.
+The planned editing flow has five core phases, followed by an optional post-draft review iteration loop when the drafted instructions need quality checking before human application.
 
 ### 1. `plan-revisions`
 
@@ -45,7 +46,29 @@ Its output is a structured artifact that answers:
 - where the likely edit belongs
 - why the change matters
 
-### 2. `load-writing-constraints`
+### 2. `revision-recommendations*.md`
+
+Produce a human-readable advisory memo from `revision-plan*.json`.
+
+This phase sits immediately after shared revision planning. It does not replace the machine-readable revision-plan artifact, and it does not rewrite source documents. Its purpose is to make the planned revisions legible to a human editor before constraint loading, contextualization, or drafting begins.
+
+This stage is optional but strongly recommended in the first specification pass so existing editing chains remain valid. A chain that continues directly from `revision-plan*.json` to `load-writing-constraints` is still valid for backward compatibility, but a user-facing editing flow should prefer the Markdown companion when human-readable guidance is requested.
+
+Minimum expected content:
+
+- a short scope summary naming the source document and the upstream review or feedback basis
+- a prioritized list of revision targets in plain language
+- for each target, the issue, intended revision move, likely location, and why it matters
+- any explicit cautions about unsupported claims, missing evidence, or items that still require verification
+- a concise statement that the memo is advisory and does not modify the source document
+
+Deterministic naming:
+
+- first artifact: `revision-recommendations.md`
+- preserved next artifact: `revision-recommendations-v2.md`
+- later preserved artifacts continue as `revision-recommendations-v3.md`, `revision-recommendations-v4.md`, and so on
+
+### 3. `load-writing-constraints`
 
 Load the writing rules that govern the next edit pass.
 
@@ -62,7 +85,7 @@ Examples:
 - journal or registry expectations
 - non-negotiable truth constraints
 
-### 3. `contextualize-revisions-<object>`
+### 4. `contextualize-revisions-<object>`
 
 Map abstract revision targets onto the actual source document and its local dependencies.
 
@@ -81,7 +104,7 @@ This phase determines:
 - whether the proposed revision conflicts with constraints
 - whether the edit is feasible without unsupported new claims
 
-### 4. `draft-edits-<object>`
+### 5. `draft-edits-<object>`
 
 Produce executable edit suggestions.
 
@@ -162,6 +185,7 @@ The minimum planned artifacts are:
 
 - a normalized feedback plan artifact for feedback-addressed workflows
 - a revision plan artifact
+- a human-readable revision recommendations artifact
 - a writing constraints artifact
 - a contextualized edit plan artifact
 - a drafted edit instructions artifact
@@ -239,6 +263,23 @@ Contract notes:
 - `review_paths` must enumerate the exact review artifacts used to build the plan
 - `revision_targets` is required and each target must carry explicit `source_evidence` plus at least one `candidate_location`
 - `edit_intent` is normalized into a finite set so downstream contextualizers can branch deterministically
+
+### Revision Recommendations Markdown Artifact
+
+This is the human-readable companion to `revision-plan*.json`.
+
+The artifact should be saved next to the corresponding revision plan and use matching version numbers when preservation is required. For example:
+
+- `revision-plan.json` -> `revision-recommendations.md`
+- `revision-plan-v2.json` -> `revision-recommendations-v2.md`
+
+Contract notes:
+
+- the Markdown artifact is advisory output derived from the saved revision plan; it is not a substitute for the JSON contract
+- it should stay readable to a human editor and avoid schema-like repetition when a short prose explanation is clearer
+- it should preserve the same revision-target continuity as the paired `revision-plan*.json`
+- it must state that it does not rewrite the source document and does not authorize unsupported new claims
+- downstream stages may proceed without it for backward compatibility, but user-facing routing should prefer it when human-readable guidance is requested
 
 ### Writing Constraints Artifact
 
@@ -498,6 +539,7 @@ The deterministic layout is:
 
 - `artifacts/grants/<source-slug>/editing/normalized-feedback-plan.json`
 - `artifacts/grants/<source-slug>/editing/revision-plan.json`
+- `artifacts/grants/<source-slug>/editing/revision-recommendations.md`
 - `artifacts/grants/<source-slug>/editing/writing-constraints.json`
 - `artifacts/grants/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/grants/<source-slug>/editing/drafted-edit-instructions.json`
@@ -509,6 +551,7 @@ The deterministic layout is:
 - `artifacts/grants/<source-slug>/editing/drafted-edit-recommendations-v2.md`
 - `artifacts/papers/<source-slug>/editing/normalized-feedback-plan.json`
 - `artifacts/papers/<source-slug>/editing/revision-plan.json`
+- `artifacts/papers/<source-slug>/editing/revision-recommendations.md`
 - `artifacts/papers/<source-slug>/editing/writing-constraints.json`
 - `artifacts/papers/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/papers/<source-slug>/editing/drafted-edit-instructions.json`
@@ -520,6 +563,7 @@ The deterministic layout is:
 - `artifacts/papers/<source-slug>/editing/drafted-edit-recommendations-v2.md`
 - `artifacts/paps/<source-slug>/editing/normalized-feedback-plan.json`
 - `artifacts/paps/<source-slug>/editing/revision-plan.json`
+- `artifacts/paps/<source-slug>/editing/revision-recommendations.md`
 - `artifacts/paps/<source-slug>/editing/writing-constraints.json`
 - `artifacts/paps/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/paps/<source-slug>/editing/drafted-edit-instructions.json`
@@ -531,6 +575,7 @@ The deterministic layout is:
 - `artifacts/paps/<source-slug>/editing/drafted-edit-recommendations-v2.md`
 - `artifacts/paper-code/<source-slug>/editing/normalized-feedback-plan.json`
 - `artifacts/paper-code/<source-slug>/editing/revision-plan.json`
+- `artifacts/paper-code/<source-slug>/editing/revision-recommendations.md`
 - `artifacts/paper-code/<source-slug>/editing/writing-constraints.json`
 - `artifacts/paper-code/<source-slug>/editing/contextualized-edit-plan.json`
 - `artifacts/paper-code/<source-slug>/editing/drafted-edit-instructions.json`
@@ -546,6 +591,7 @@ Naming rules:
 - `<source-slug>` is derived from the source document being revised, not from the review report filename
 - the object folder must match the normalized `document_type`
 - if an artifact for the same source already exists and should be preserved, append `-v2`, `-v3`, and so on to the artifact filename
+- `revision-recommendations*.md` should use the same version number as the paired `revision-plan*.json` when preservation is required
 - post-draft loop artifacts should use the same version number as the contextualized plan and drafted instructions for that iteration when preservation is required
 - downstream stages should consume the latest explicit artifact path rather than infer state from chat context alone
 
@@ -755,13 +801,14 @@ The repo may later expose higher-level composite workflows per object type, but 
 The intended order is:
 
 1. define the shared revision-plan artifact
-2. define the shared writing-constraints artifact
-3. implement `plan-revisions`
-4. implement `load-writing-constraints`
-5. implement grant and paper contextualizers
-6. implement grant and paper drafting skills
-7. extend to PAP and paper-code contextualizers
-8. add validation fixtures and deterministic output rules
+2. define the human-readable `revision-recommendations*.md` companion stage
+3. define the shared writing-constraints artifact
+4. implement `plan-revisions`
+5. implement `load-writing-constraints`
+6. implement grant and paper contextualizers
+7. implement grant and paper drafting skills
+8. extend to PAP and paper-code contextualizers
+9. add validation fixtures and deterministic output rules
 
 This order minimizes premature complexity while preserving the right abstraction boundary.
 

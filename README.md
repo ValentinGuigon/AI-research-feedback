@@ -154,10 +154,11 @@ Use the editing workflows when you already have review feedback or comments and 
 
 1. `plan-revisions` or `plan-feedback-revisions`
 2. `convert-feedback-plan-to-revision-plan` when starting from normalized feedback
-3. `load-writing-constraints`
-4. `contextualize-revisions-grant` or `contextualize-revisions-paper`
-5. `draft-edits-grant` or `draft-edits-paper`
-6. `review-drafted-edits` when you want the post-draft loop to evaluate the projected revised state before human application
+3. `revision-recommendations*.md` as the specified human-readable advisory companion to `revision-plan*.json`
+4. `load-writing-constraints`
+5. `contextualize-revisions-grant` or `contextualize-revisions-paper`
+6. `draft-edits-grant` or `draft-edits-paper`
+7. `review-drafted-edits` when you want the post-draft loop to evaluate the projected revised state before human application
 
 ### Mode Guidelines
 
@@ -205,6 +206,7 @@ Planned post-review editing artifacts save under deterministic per-source folder
 
 - `normalized-feedback-plan` -> `artifacts/<object-folder>/<source-slug>/editing/normalized-feedback-plan.json`
 - `revision-plan` -> `artifacts/<object-folder>/<source-slug>/editing/revision-plan.json`
+- `revision-recommendations` -> `artifacts/<object-folder>/<source-slug>/editing/revision-recommendations.md`
 - `writing-constraints` -> `artifacts/<object-folder>/<source-slug>/editing/writing-constraints.json`
 - `contextualized-edit-plan` -> `artifacts/<object-folder>/<source-slug>/editing/contextualized-edit-plan.json`
 - `drafted-edit-instructions` -> `artifacts/<object-folder>/<source-slug>/editing/drafted-edit-instructions.json`
@@ -223,6 +225,7 @@ Shared post-review editing stages now specified:
 
 - `plan-feedback-revisions` -> `artifacts/<object-folder>/<source-slug>/editing/normalized-feedback-plan.json`
 - `convert-feedback-plan-to-revision-plan` -> `artifacts/<object-folder>/<source-slug>/editing/revision-plan.json`
+- `revision-recommendations*.md` -> `artifacts/<object-folder>/<source-slug>/editing/revision-recommendations.md` and versioned companions such as `revision-recommendations-v2.md`
 - `plan-revisions` -> `artifacts/<object-folder>/<source-slug>/editing/revision-plan.json`
 - `load-writing-constraints` -> `artifacts/<object-folder>/<source-slug>/editing/writing-constraints.json`
 - `contextualize-revisions-grant` -> `artifacts/grants/<source-slug>/editing/contextualized-edit-plan.json`
@@ -243,6 +246,8 @@ Current post-review editing support by object family:
 | Paper-code    | `review-paper-code`                  | shared contracts only; no paper-code contextualizer or drafter                           | deferred                                 | none                                                                            | review only; no editing-loop exposure                                         |
 
 Editing artifacts are human-applied instructions and review evidence. They do not rewrite source documents, create tracked changes, patch live forms, or add unsupported empirical, sponsor, budget, partner, citation, or analysis claims.
+
+The newly specified `revision-recommendations*.md` stage is a human-readable advisory memo derived from `revision-plan*.json`. It is optional but strongly recommended so existing chains remain valid while later implementation work adds the readable companion stage.
 
 Representative runtime validation artifacts now exist for a grant fixture under:
 

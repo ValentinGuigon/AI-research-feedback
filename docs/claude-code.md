@@ -11,6 +11,8 @@ Project-local install:
 ```powershell
 New-Item -ItemType Directory -Force .claude\commands | Out-Null
 Copy-Item Skills\review-paper.md .claude\commands\review-paper.md
+Copy-Item Skills\review-paper-light.md .claude\commands\review-paper-light.md
+Copy-Item Skills\review-paper-code.md .claude\commands\review-paper-code.md
 Copy-Item Skills\run-review.md .claude\commands\run-review.md
 Copy-Item Skills\run-editing.md .claude\commands\run-editing.md
 Copy-Item Skills\review-pap.md .claude\commands\review-pap.md
